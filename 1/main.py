@@ -5,27 +5,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def spiral(windings=5, s=1/2, omega=2*np.pi):
-    """Creates a 2D numpy array of points on a spiral.
-
-    :param windings: how many windings the spiral shall have (defaults to 5)
-    :param s: the scaling factor (distance between the arms of the
-              spiral) (defaults to 1/2)
-    :param omega: the angular speed of the spiral (defaults to 2pi)
-
-    :returns: 2D numpy array of x and y
-
-    :rtype: numpy array
-    """
-
-    times = np.arange(0, windings, 0.01) # initialize the spiral parameter
-    angles = omega * times
-
-    return (s**times)*np.array([np.cos(angles),
-                             np.sin(angles)])
-
-
-
 # I am leaving this function out of the below class, because it really
 # has no reason being there.
 def get_standard_map(theta_0, p_0, K, N):
