@@ -13,6 +13,9 @@ tramp
 .org-id-locations
 *_archive
 
+# flycheck-mode
+flycheck_*
+
 # flymake-mode
 *_flymake.*
 
