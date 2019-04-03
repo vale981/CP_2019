@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """Draw the standard map of the kicked rotor interactively."""
+
 # NOTE: Barebones copied from ../0/main.py
+
+# Meine Muttersprache ist Deutsch. Ich verwende in Kommentaren
+# generell die Englische Sprache um verwirrendes 'Denglisch' zu
+# vermeiden :)
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
 
 # I am leaving this function out of the below class, because it really
 # has no reason being there.
@@ -24,23 +30,25 @@ def get_standard_map(theta_0, p_0, K, N):
 
     # set the initial parameters
     norm_p = get_normalizer(2 * np.pi, -np.pi)
-    theta[0] = theta_0 % 2 * np.pi
+    theta[0] = theta_0 % (2 * np.pi)
     p[0] = norm_p(p_0)
 
     # calculate the standard map
     for curr in range(1, N):
         last = curr - 1 # for readability
-        theta[curr] = (theta[last] + p[last]) % 2*np.pi
+        theta[curr] = (theta[last] + p[last]) % (2 * np.pi)
         p[curr] = norm_p(p[last] + K * np.sin(theta[curr]))
 
     return theta, p
 
-# Just to avoid globals... again. I usually prefer to avoid to much
+# Just to avoid globals... again. I usually prefer to avoid too much
 # useless Object orientation, but python kinda forces it on ya!
+
+# This could be done nicer (remove hardcoded values)
 class StandardMap():
     """
     Shows a plot window that interactively draws the standart map of
-    the kicked rotor
+    the kicked rotor.
     """
 
     def __init__(self, iterations=1000, K=2.4):
@@ -50,27 +58,77 @@ class StandardMap():
         :param Number K: the default k parameter
 
         """
+
         # initialize state
         self.fig, self.ax = plt.subplots(1,1, constrained_layout=True)
+        self._orbits = []
 
         # initialize default parameters
-        self._theta_0 = np.pi
-        self._p_0 = 0
         self._K = K
         self._N = iterations
 
-        # clear the axis and plot the initial spiral
+        # initialize the axis
         self.clear()
-        self.ax.plot(*spiral())
+
+
+        # set up sliders
+        self._set_up_widgets()
 
         # register events
-        self.cid = self.fig.canvas.mpl_connect('button_press_event',
+        self.button_cid = self.fig.canvas.mpl_connect('button_press_event',
                                                self._draw_on_click)
-        self.cid = self.fig.canvas.mpl_connect('key_press_event',
+        self.key_cid = self.fig.canvas.mpl_connect('key_press_event',
                                                self._handle_key_press)
+
+        # some explainatory test
+        self.fig.text(.01, .9,
+                      'press `c` to clear\nOrbits are redrawn automatically.')
 
         # show the figure
         self.fig.show() # FIXME: that is bad style, put that into a method
+
+    def _set_up_widgets(self):
+        """Initializes the various widgets.
+        """
+
+        axcolor = 'lightgoldenrodyellow'
+
+        # K Slider
+        self._ax_K = plt.axes([0.05, 0.1, 0.1, 0.03], facecolor=axcolor)
+        self._slider_K = Slider(self._ax_K, 'K', 0, 10.0, valinit=self._K,
+                               valstep=0.05)
+        self._slider_K.on_changed(self._set_K)
+
+        # N Slider
+        self._ax_N = plt.axes([0.05, 0.15, 0.1, 0.03], facecolor=axcolor)
+        self._slider_N = Slider(self._ax_N, 'N', 10, 10000, valinit=self._N,
+                                valstep=1)
+
+        self._slider_N.on_changed(self._set_N)
+
+        self._status_txt =self.fig.text(0, 0, '')
+
+
+    def _set_N(self, N):
+        """Sets Iteration Count.
+        Triggers Recalculation.
+
+        :param Numer N: the new N
+        """
+
+        self._N = int(N)
+        self.redraw_all_orbits()
+
+
+    def _set_K(self, K):
+        """Sets the K pramater.
+        Triggers Recalculation.
+
+        :param Numer K: the new K
+        """
+
+        self._K = K
+        self.redraw_all_orbits()
 
     def _handle_key_press(self, event):
         """Handles key press events on the plot.
@@ -79,31 +137,55 @@ class StandardMap():
         """
 
         if event.key == 'c':
+            # delete all orbits
+            self._orbits = []
             self.clear()
 
-    def draw_at(self, points, coords=(0,0)):
-        """Draws points shifted by coords.
+    def draw(self, points):
+        """Draws points and refreshes the canvas.
 
         :param points: 2D Numpy array of x and y coordinates (2, N)
-        :param Tuple coords: (x, y) Coordinates (defaults to (0,0))
-
         """
 
-        self.ax.plot(*(points + [[coords[0]], [coords[1]]]))
+        self.ax.plot(*points, linestyle='None', marker='o', markersize=0.5)
         self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
     def clear(self):
         """Clears the axis and sets it up again.
         """
 
+        # clear axis
         self.ax.clear()
 
         # set up the axis (again)
-        self.ax.set_title("Spiral Plotter")
+        self.ax.set_title("Standard Map")
         self.ax.set_aspect('equal')
         self.ax.grid(True)
 
-        # red
+        # set up the axis limits and labels
+        self.ax.set_xlim([0, 2 * np.pi])
+        self.ax.set_xlabel(r"$\theta$")
+        self.ax.set_ylim([-np.pi, np.pi])
+        self.ax.set_ylabel(r"$p$")
+
+        # redraw
+        self.fig.canvas.draw()
+
+    def redraw_all_orbits(self):
+        """Recalculates and draws all saved orbits.
+        """
+
+        self.fig.canvas.draw_idle()
+
+        orbits = [get_standard_map(theta_0, p_0, self._K, self._N) \
+                  for theta_0, p_0 in self._orbits]
+
+        self.clear()
+
+        for orbit in orbits:
+            self.ax.plot(*orbit, linestyle='None', marker='o', markersize=0.5)
+
         self.fig.canvas.draw()
 
     def _draw_on_click(self, event):
@@ -112,18 +194,15 @@ class StandardMap():
         :param MouseEvent event: the click event
         """
 
-        ax = event.inaxes
-        if not ax:
+        mode = event.canvas.toolbar.mode
+        if not (event.button == 1 and event.inaxes == self.ax and mode == ''):
             return
 
-        self.draw_at(spiral(), (event.xdata, event.ydata))
+        p_0 = event.ydata
+        theta_0 = event.xdata
 
-
-if __name__ == '__main__':
-    StandardMap()
-    plt.show(block=True) # block until figure closed
-
-
+        self._orbits.append((theta_0, p_0))
+        self.draw(get_standard_map(theta_0, p_0, self._K, self._N))
 
 ###########################################################################
 #                                 Helpers                                 #
@@ -142,3 +221,9 @@ def get_normalizer(interval, offset):
         return ((value - offset) % interval) + offset
 
     return normalize
+
+
+if __name__ == '__main__':
+    plt.ion()
+    _ = StandardMap() # avoid garbage collection
+    plt.show(block=True) # block until figure closed
