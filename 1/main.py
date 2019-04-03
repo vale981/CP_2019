@@ -222,8 +222,64 @@ def get_normalizer(interval, offset):
 
     return normalize
 
+###########################################################################
+#                                Diskussion                               #
+###########################################################################
+
+DIS = \
+"""
+Koordinaten: (theta, p)
+
+Wir beginnen mit K=2.4.  Es zeichnen sich deutlich fuenf Hauptzentren
+periodischer Bewegungen (Orbits) ab.  Die groesste Region befindet
+sich um (pi, 0) wobei die Orbits zum Zentrum hin immer mehr einer
+ellipse aehneln.  Es scheint sich im Zentrum ein Fixpunkt zu befinden.
+Die Zentrale zone wird von einer zone der chaotischen (nicht
+periodischen) Bewegung umgeben (Chaotisches Meer).  Die in dieser Zone
+beginnenden Bahnen scheinen eine gewisse Zeit in der Naehe der fuenf
+regulaeren 'Inseln' zu verweilen, um dann jedoch (teilweise!) in die
+aeusseren gebiete abzudriften.
+
+Die Orbits in den vier, die Zentrale Region umgebenden, Zentren der
+regulaeren Bewegung springen zwischen eben diesen hin und her und
+bilden dort Kreisaehnliche Formen.  Die Orbits in der Naehe der Mitte
+dieser Zentren werden zunehmend Kreisfoermiger.  Die vier Nebenzentren
+teilen sich einen Fixpunkt (der demnach natuerlich kein echter
+Fixpunkt ist :P).
+
+Ausserhalb dieser Zentren liegt eine Zone der nicht periodischen
+(chaotischen) Bewegung, die mit zunehmenden K groesser wird.  Bei
+K~=7.7 sind nach mehreren Wanderungen keine Zonen periodischer
+Bewegung zu erkennen.
+
+Fuer kleine K gibt es meist eine Zentrale regulaere Zone mit
+wechselnden 'Satelitenzonen', die teilweise erstaunlich weit vom
+Zentrum entfernt sind (Siehe K=1.55).  Mit steigendem K wird die
+Zentrale Zone laenglicher.  Bis sie sich bei K~=4.55 in zwei 'Topfen'
+aufspaltet.
+
+Fuer K=0 ergeben sich die horizontalen Linien der gleichfoermigen
+Bewegung.
+
+Die Orbits in den ZP (Zohnen periodischer Bewegung) zweigen jeweils
+individuelle Strukturen (Punktabstand, nicht exaktes
+uebereinanderfallen) und besonders (aber nicht ausschlieslich) an den
+Randzonen zum Chaotischen Meer scheinen in sich geschlossene Gebilde
+fraktaler Natur (aehnlichkeit zu den groesseren ZP inkl.
+Pseudofixpunkte) zu erscheinen.  Aufgrund der begraenzten
+Rechenpraezision ist ein Detaillstudium dieser Zonen mit diesem
+Programm nur begrenzt moeglich.  Da die Orbits zwischen einer Vielzahl
+dieser kleinen ZP springen ist auch eine groessere Iterationsanzahl
+noetig um deren Struktur aufzuzeigen.
+"""
+
+###############################################################################
+#                                     Main                                    #
+###############################################################################
 
 if __name__ == '__main__':
+    print(DIS)
+
     plt.ion()
     _ = StandardMap() # avoid garbage collection
     plt.show(block=True) # block until figure closed
