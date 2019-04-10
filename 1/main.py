@@ -11,7 +11,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numba import jit
 from functools import lru_cache
+import matplotlib
 from matplotlib.widgets import Slider
+
+# use Cairo for performance
+matplotlib.use('GTK3Agg', warn=False, force=True)
 
 # I am leaving this function out of the below class, because it really
 # has no reason being there.
