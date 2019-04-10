@@ -9,10 +9,14 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numba import jit
+from functools import lru_cache
 from matplotlib.widgets import Slider
 
 # I am leaving this function out of the below class, because it really
 # has no reason being there.
+@lru_cache(maxsize=None)
+@jit(cache=True)
 def get_standard_map(theta_0, p_0, K, N):
     """Calculates the standard map for the given parameters.
 
@@ -235,7 +239,8 @@ periodischer Bewegungen (Orbits) ab.  Die groesste Region befindet
 sich um (pi, 0) wobei die Orbits zum Zentrum hin immer mehr einer
 ellipse aehneln.  Es scheint sich im Zentrum ein Fixpunkt zu befinden.
 Die Zentrale zone wird von einer zone der chaotischen (nicht
-periodischen) Bewegung umgeben (Chaotisches Meer).  Die in dieser Zone
+periodischen) Bewegung umgeben (Chaotisches Meer, es existieren aber
+auch weiter aussen noch kleine Inseln ^^).  Die in dieser Zone
 beginnenden Bahnen scheinen eine gewisse Zeit in der Naehe der fuenf
 regulaeren 'Inseln' zu verweilen, um dann jedoch (teilweise!) in die
 aeusseren gebiete abzudriften.
