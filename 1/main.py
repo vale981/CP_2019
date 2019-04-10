@@ -148,6 +148,10 @@ class StandardMap():
             # delete all orbits
             self._orbits = []
             self.clear()
+        elif event.key == 'z':
+            self._set_K(self._K + 0.1)
+        elif event.key == 'u':
+            self._set_K(self._K - 0.1)
 
     def draw(self, points):
         """Draws points and refreshes the canvas.
