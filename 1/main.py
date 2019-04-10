@@ -29,8 +29,8 @@ def get_standard_map(theta_0, p_0, K, N):
     """
 
     # Initialize the arrays
-    theta = np.zeros(N)
-    p = np.zeros(N)
+    theta = np.zeros(N+1)
+    p = np.zeros(N+1)
 
     # set the initial parameters
     norm_p = get_normalizer(2 * np.pi, -np.pi)
@@ -38,7 +38,7 @@ def get_standard_map(theta_0, p_0, K, N):
     p[0] = norm_p(p_0)
 
     # calculate the standard map
-    for curr in range(1, N):
+    for curr in range(1, N+1):
         last = curr - 1 # for readability
         theta[curr] = (theta[last] + p[last]) % (2 * np.pi)
         p[curr] = norm_p(p[last] + K * np.sin(theta[curr]))
