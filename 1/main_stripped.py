@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Draw the standard map of the kicked rotor interactively."""
+"""
+Draw the standard map of the kicked rotor interactively by specifying
+the initial condifition with a mouse click on the plot.
+"""
 
 # Meine Muttersprache ist Deutsch. Ich verwende in Kommentaren
 # generell die Englische Sprache um verwirrendes 'Denglisch' zu
@@ -18,6 +21,9 @@ matplotlib.use('GTK3Agg', warn=False, force=True)
 ###############################################################################
 #                                 Set Up Plot                                 #
 ###############################################################################
+
+# I am doing this in the top level for clarity, as this module won't
+# ever be imported anywhere.
 
 # get them as objects, as I dont like fuzzing around with globals
 # next time, i'll just use the global plot...
