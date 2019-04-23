@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 def set_up_plot():
     """Sets up the global plot parameters."""
     plt.title("Numerical differentiation Errors")
-    plt.xlabel(r'$\log(h)$')
-    plt.ylabel(r"$\log(\Delta f')$")
+    plt.xlabel(r'$h$')
+    plt.ylabel(r"$\Delta f'$")
 
     # logarithmic plot
     plt.yscale('log')
