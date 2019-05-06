@@ -1,0 +1,13 @@
+Erwartetes skallierungsverhalten wird nicht eingehalten.  Fehler bis h ~=
+0.02 sehr gering auf einem plateau (~1e-17) und dann in parabelartigen
+Bogen ansteigend. (maximum bei h~=0.2 bis 0.3, danach ~ plateau)
+gerade da wo die schrittweite anfaengt die region mit f>>0 zu
+ueberschreiten.
+
+Trapez- und Mittelpunktregel sind annaehernd identisch.  Die Simpson
+Regel liefert einen um einen faktor geringeren Fehler.
+
+In der Plateauregion (h<0.02) ist ein leicht negativer Anstieg zu
+erkennen, der sich auf Diskretisierungsfehler zurueckfuehren laesst,
+wobei somit ein gewisses Minimum hier nicht unterschritten werden kann.
+(~2e-16 mit simpson)

@@ -1,11 +1,10 @@
-
 #!/usr/bin/env python3
 """
 Compare numeric integration methods.
 
 Plots the relative error of three numerical integration methods and
 their expected dependence on the sub-interval length parameter `h` in
-respect to that paramater.
+respect to that parameter.
 
 Those integration methods are:
 
@@ -26,7 +25,9 @@ The three examined functions are:
 
     - the Theta Funktion
 
-which are being integrated over the Interval (-pi/2, pi/2).
+which are being integrated over the Interval (-pi/2, pi/4).
+
+This program is implemented for the first of the above functions!
 """
 
 import numpy as np
@@ -114,10 +115,23 @@ def simpson_int(func, interval, steps):
     points, h = np.linspace(*interval, steps, retstep=True)
 
     partial_sums = func(points)
-    partial_sums[1:-1:2] *= 4
-    partial_sums[2:-2:2] *= 2
 
+    # apply the scaling factors
+    partial_sums[1:-1:2] *= 4  # every second, starting with the second
+    partial_sums[2:-2:2] *= 2  # every second, starting with the third
+
+    # note that the interval length is 2*h!
     return h/3 * partial_sums.sum(), h
+
+def fun(x):
+    """The function to evaluate.
+
+    :param x: the functional argument
+    :rtype: float
+    """
+
+    return np.sinh(2*x)
+
 
 def main():
     """Dispatch the main logic. Used as convenience.
@@ -141,17 +155,9 @@ def main():
     # the index where the error plot and the projected error plot touch
     touch_index = int(len(N)*3/4)
 
-    functions = [(lambda x: np.sinh(2*x), "sinh(2x)",
-                  -4.541387398431731922871),
-                 (lambda x: np.exp(-100*x**2), "exp(-100*x^2)",
-                  0.17724538509055160272982),
-                 (lambda x: 0.5 * (1.0+np.sign(x)), r"$\Theta(x)$",
-                  interval[1]),
-                 (np.ones_like, r"$1$",  # constant function
-                  interval[1] - interval[0])]
-
     # choose the function to analyze
-    function, name, true_int = functions[2]
+    name = "sinh(2x)"
+    true_int = -4.541387398431731922871  # numeric reference value
 
     # this represents the most concise and readable form of
     # implementing the evaluation and plotting of the integral errors
@@ -169,7 +175,7 @@ def main():
         method = np.vectorize(method, excluded=[0, 1])
 
         # get the numerical integrals, unzip the list of tuples
-        integrals, step_sizes = method(function, interval, N)
+        integrals, step_sizes = method(fun, interval, N)
 
         # calculate the relative errors
         errors = np.abs((integrals - true_int) / true_int)
@@ -182,10 +188,11 @@ def main():
 
         # plot both into the diagram
         ax.plot(step_sizes, expected_errors, color=color, linestyle='-',
-                 label=f"{name}, {method_name}", alpha=0.5)
+                label=f"Expected Error ({name}, {method_name})", alpha=0.5)
+
         ax.plot(step_sizes, errors, color=color, linestyle="None", marker='o',
-                 markersize=0.4, alpha=1,
-                 label=f"Exp. Error ({name}, {method_name})")
+                markersize=0.4, alpha=1,
+                label=f"Error ({name}, {method_name})")
 
     # show legend and plot
     ax.legend(loc="best")
@@ -216,8 +223,10 @@ Beise Methoden zeigen keine Fluktuationen im betrachteten Interval.
 
 Simpson Regel:
  - skaliert wie erwartet
- - fehler zeigt Plateaubildung fuer kleine h aufgrund von diskretisierungsfehler
+ - fehler zeigt Plateaubildung fuer kleine h aufgrund von
+
    (Aufwendigere Berechnung, h/3 multiplikator)
+ - beste methode
 
 b) exp(-100*x^2)
 Analytisch: 0.17724538509055160272982
@@ -232,12 +241,15 @@ gerade da wo die schrittweite anfaengt die region mit f>>0 zu
 ueberschreiten.
 
 Trapez- und Mittelpunktregel sind annaehernd identisch.  Die Simpson
-Regel liefert einen um einen faktor geringeren Fehler.
+Regel osziliert weniger, aber bricht frueher aus.
 
 In der Plateauregion (h<0.02) ist ein leicht negativer Anstieg zu
 erkennen, der sich auf Diskretisierungsfehler zurueckfuehren laesst,
 wobei somit ein gewisses Minimum hier nicht unterschritten werden kann.
 (~2e-16 mit simpson)
+
+Alle methoden geben hier aehnliche resultate, die sich normalisieren,
+falls der integrationsbereich eingeschraenkt wird.
 
 Es empfielt sich den Integrationsbereich einzuschraenken (effizienz).
 
@@ -248,19 +260,23 @@ Unstetig bei x=0
 Allgemeines Bild:
 Fehler skalliert mit h^1. Zeigt bei h~<0.05 oszilationen.
 
-Jeh nachdem ob die aufteilung der Intervalle x=0 erwischt oder nicht ergiebt
-sich der Fehler aus dem Ueberhang, der mit kleineren Intervallen ~linear kleiner
-wird.
+Jeh nachdem ob die aufteilung der Intervalle x=0 erwischt oder nicht
+ergibt sich der Fehler aus dem Ueberhang, der mit kleineren Intervallen
+~linear kleiner wird.
 
-Jeh nachdem, ob die Kante `erwischt` wird kann der Fehler auf das Niveau des
-Rundungsfehlers hinabsinken. (Dies ware fuer die Trapezmethode bei symetrischen
-Integrationsgrenzen oft der Fall.)
+Mittelpunkt/Simpson:
+Falls die Kante der Theta Funktion `erwischt` wird, kann der Fehler auf das
+Niveau des Rundungsfehlers hinabsinken. (Dies ware fuer die Trapezmethode bei
+symetrischen Integrationsgrenzen oft der Fall.)
 
-Tendentiell sind hier Mittelpunkt- und Simpsonregel aequivalent.
+Tendentiell sind hier Mittelpunkt- und Simpsonregel aequivalent. Und zeigen
+die beschriebenen oszilationen nach unten. (Halbzahlige schritte.)
 
-Die Trapezregel giebt einen um einen Faktor geringeren Fehler, osziliert aber im
-Gegensatz zu den anderen Methoden nur geringfuegig nach oben.
+Trapez:
+Die Trapezregel gibt einen um einen Faktor geringeren Fehler, osziliert aber im
+Gegensatz zu den anderen Methoden geringfuegig nach oben und nie nach unten.
+(Allein sie trifft bei diesen Intevallgrenzen die Stufe nie genau.)
 
 Bei leichter variation des Integrationsintervalls laesst sich aehnliches
-Verhalten beobachten.
+Verhalten beobachten. (Wobei sich das Bild bei symetrisierung aendert.)
 """
