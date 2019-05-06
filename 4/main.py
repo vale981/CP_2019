@@ -18,16 +18,21 @@ def set_up_plots():
     :returns: fig, ax
     """
 
-    # Create two subplots (trajectory, stroboscope) sharing the y axis.
-    fig, (ax_tr, ax_st) = plt.subplots(1, 2, sharey=True)
+    # Create two subplots (trajectory, stroboscope) sharing the x,y axis.
+    fig, (ax_tr, ax_st) = plt.subplots(1, 2, sharex=True, sharey=True)
     ax_tr.set_title('Phase Space Trajectory')
     ax_st.set_title('Stroboscopic Phase Space ')
 
-    ax_tr.set_xlabel(r'$x$')
-    ax_tr.set_ylabel(r"$t$")
+    for ax in ax_tr, ax_st:
+        ax.set_xlabel(r'$x$')
+        ax.set_xlabel(r'$x$')
 
-    ax_st.set_xlabel(r'$x$')
-    ax_st.set_ylabel(r"$t$")
+        # set fixed aspect ratio
+        ax.set_aspect('equal')
+
+        # fix the limits
+        ax.set_xlim(-1,1)
+        ax.set_ylim(-1,1)
 
     return fig, (ax_tr, ax_st)
 
