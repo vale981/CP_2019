@@ -7,6 +7,10 @@ hamiltonian of the system considered is: H = p^2/2 + x^4 − x^2 + x *
 Where A = 0.2 (the skew of the potential) and B = 0.1 the parameter
 for the drive coupling and omega = 1 the drive frequency.
 
+The hamiltonian is giving rise to the equations of motion:
+ - d/dt q = p
+ - d/dt p = -4*x**3 + 2*x - A - B*np.sin(omega*t)
+
 The system is analized for 200 drive periods (2*pi/omega) by plotting
 phase space trajectories (obtained by numerically solving the
 differential equations for (x, p) and plotting them:
@@ -24,9 +28,10 @@ New orbits can be added by mouse click.
 A periodic trajectory is being drawn upon the programm start.
 """
 
+import functools
 import numpy as np
 import matplotlib.pyplot as plt
-import functools
+
 from scipy.integrate import odeint
 from scipy.optimize import minimize_scalar
 
@@ -49,8 +54,8 @@ def set_up_plots():
         ax.set_aspect('equal')
 
         # fix the limits
-        ax.set_xlim(-1, 1)
-        ax.set_ylim(-1, 1)
+        ax.set_xlim(-1.2, 1.2)
+        ax.set_ylim(-1.2, 1.2)
 
     return fig, (ax_tr, ax_st)
 
@@ -77,7 +82,7 @@ def draw_energy_countour(axes, A):
     """
 
     # create a grid for the energy calculation
-    coordinates = np.linspace(-1, 1, 1000)
+    coordinates = np.linspace(-1.2, 1.2, 1000)
     p_x, p_p = np.meshgrid(coordinates, coordinates)
 
     # calculate the energies from the hamiltonian
@@ -90,8 +95,8 @@ def draw_energy_countour(axes, A):
 
     # plot the contours on both axes
     for ax in axes:
-        ax.contour(p_x, p_p, energies, alpha=0.2, levels=levels)
-        ax.contour(p_x, p_p, energies, alpha=0.2,
+        ax.contour(p_x, p_p, energies, alpha=0.4, levels=levels)
+        ax.contour(p_x, p_p, energies, alpha=0.4,
                              levels=[separatrix])
 
 def rhs(y, t, A, B, omega):
@@ -202,9 +207,9 @@ def main():
     periods = 200  # how many drive periods to solve for
     steps_per_period = 50
 
-    # print the doc
-    print(__doc__)
 
+    # user guide
+    print(__doc__)
 
     # set up figures and listeners
     fig, axes = set_up_plots()
@@ -228,6 +233,10 @@ def main():
 
     # draw the contours
     draw_energy_countour(axes, A)
+
+    # print parameters
+    fig.text(0, 0, f"$A={A}$ $B={B}$ $\\omega={omega}$")
+
     plt.show()
 
 if __name__ == '__main__':
@@ -286,8 +295,9 @@ Inseln: (x, p) = (0.232, -0.350) (gerundet).  Dieser orbit wird auch
 beim Start des programms automatisch gezeichnet.
 
 Interessanter weise bleibt dieser orbit auch fuer potentiale mit
-anderen geraden Potenzen im ersten summanden in regulaeren inseln: 12,
+anderen geraden Potenzen im ersten summanden in regulaeren inseln: (12,
+6).
 
-    6. Da die x koordinate dieses orbits reltav klein ist, dominiert
-       hier noch der Quadratische Term des Potentials.
+Da die x koordinate dieses orbits reltav klein ist, dominiert hier
+noch der Quadratische Term des Potentials.
 """
