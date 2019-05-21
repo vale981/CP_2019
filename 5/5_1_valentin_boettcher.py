@@ -32,12 +32,14 @@ def get_coeff_matrix(potential, h_eff, interval, N):
     """Get the coefficient matrix for the discreticized tiseq.
 
     :param potential: A function of one parameter acting on np.arrays.
-    :param Tuple interval: the interval for which the potential is < infty
-    :param N: for how many points the tiseq may be solved (in fact
-        it is being solved for `N + 2` points because the
-        endpoints are zero)
+    :param Tuple interval: the interval for which the potential is <
+        infty
+    :param N: matrix size, for how many points the tiseq may be solved
+              (excluding the endpoints), this matches the nomenclature
+              of `N` in the lecture.
 
     :returns: the coefficient matrix, points, step size
+
     :rtype: np.array, np.array, number
     """
 
@@ -65,9 +67,9 @@ def calculate_eigen(potential, h_eff, interval, N, eigenrange):
     :param potential: A function of one parameter acting on np.arrays.
     :param Tuple interval: the interval for which the potential is <
         infty
-    :param N: for how many points the tiseq may be solved (excluding
-              the endpoints), this mathes the nomenclature of `N` in
-              the lecture.
+    :param N: matrix size, for how many points the tiseq may be solved
+              (excluding the endpoints), this matches the nomenclature
+              of `N` in the lecture.
     :param Tuple eigenrange: for which eigenenergies E_n to solve
 
     :returns: eigenenergies, eigenfunctions (normalized), x
@@ -144,9 +146,9 @@ def main():
 
     # Model Parameters
     h_eff = 0.07
-    A = 0.06
+    A = 0*0.06
     interval = (-2, 2)
-    N = 500  # discretization point-count
+    N = 500  # matrix size
     eigen_range = (0, 5)  # eigenvalue selection
 
     print(__doc__)
@@ -179,7 +181,7 @@ if __name__ == '__main__':
 """
 a) Begruendung
 
-    - Schritte, delta_x: N=500 ergibt loesungen, die sich zu denen von
+    - Schritte, delta_x: N=500 ergibt Loesungen, die sich zu denen von
       N=2000 sehr wenig unterscheiden.  Unter ca.  200 Schritten
       treten aber zunehmend numerische Ungenauigkeiten zu tage.  Es
       muessen mindestens so viele Schritte gewaehlt werden, wie man
@@ -190,6 +192,8 @@ a) Begruendung
       Eigenfunktionen zeigen in dieser Darstellung keine Unterschiede.
       Kritisch allerdings sind die Nulldurchgaenge der phi_i, die bei
       kleinen N verschwinden und somit die Knotenregel verletzen.
+      Werden allerdings genaue werte fuer die Energien benoetigt so
+      muss N wesentlich groesser als 500 gewaehlt werden.
 
     - Grenzen: das interval -2, 2 wurde so gewahlt, dass die Loesung
       genuegen Raum zum Natuerlichen abfallen hat.  Eine variation
@@ -209,7 +213,7 @@ potentialminima gross werden.  Superposition dieser Loesungen laesst
 einen Tunneleffekt zu.  (Ebenso Loesung 2, 3) Die Loesungen sind
 gebunden und fallen in den Klassisch verbotenen bereichen schnell ab,
 sodass die einschraenkung auf ein endliches Interval eine gute
-naeherung darstellt.  In allgemeiner Form aber aehneln sie den
+naeherung darstellt.  In allgemeiner Form aber aehneln sie beig den
 Eigenfunktionen des Harm.  Oszi (bis auf asymetrische Verzerrungen.)
 
 Fuer groessere h_eff werden die Energieeigenwerte groesser (und liegen
