@@ -11,6 +11,7 @@ from scipy.linalg import eigh
 import time
 from threading import Thread
 from matplotlib.animation import FuncAnimation
+import gc
 
 def gauss_wavelet(sigma, p0, h_eff, x0, x):
     return 1/(2*np.pi*sigma**2)**1/4* \
@@ -58,7 +59,7 @@ def set_up_plot(interval):
     return fig, ax
 
 def animate_time_evolution(base, energies, points, h_eff,
-                           wavelet_params, max_t, ax, event):
+                           wavelet_params, fig, ax, event):
 
     mode = event.canvas.toolbar.mode
     if event.button != 1 or mode != '' or (event.inaxes != ax):
@@ -66,32 +67,44 @@ def animate_time_evolution(base, energies, points, h_eff,
 
     wavelet = partial(gauss_wavelet, *wavelet_params, h_eff, event.xdata)
     coeff = projection_coeff(base, wavelet, points)
+    energy = expected_energy_value(energies, coeff)
     time_dep_wavelet = time_evolution(base, energies, coeff, h_eff)
 
-    ax.lines = []
+    ax.axhline(energy, color='gray')
+    ax.lines = [ax.lines[0]]
     line = ax.plot(points, np.zeros_like(points))
     start = time.time()
+    exit_flag = False
+
+    def set_exit_flag(_):
+        nonlocal exit_flag
+        exit_flag = True
+
+    close_cid = fig.canvas.mpl_connect('close_event', set_exit_flag)
+    click_cid = fig.canvas.mpl_connect("button_press_event", set_exit_flag)
+
 
     while 1:
-        dt = time.time() - start
-        if not line or dt > max_t:
-            print('hey')
+        if exit_flag or not line:
+            print("here")
             break
+        dt = time.time() - start
 
         wave = np.abs(time_dep_wavelet(dt))**2
 
-        line[0].set_ydata(wave)
+        line[0].set_ydata(energy + wave)
         event.canvas.flush_events()
         event.canvas.draw()
 
-    #an = FuncAnimation(fig, update, blit=True, interval=0)
+    fig.canvas.mpl_disconnect(close_cid)
+    fig.canvas.mpl_disconnect(click_cid)
 
 def main():
     """Dispatch the main logic. Used as convenience.
     """
 
     # Potential arameters
-    A = 0.06
+    A = 0.16
 
     # numeric parameters
     h_eff = 0.07
@@ -115,7 +128,7 @@ def main():
     ax.plot(points, potential(points))
 
     on_click = partial(animate_time_evolution, phi, e, points, h_eff,
-                       wavelet_params, max_t, ax)
+                       wavelet_params, fig, ax)
     fig.canvas.mpl_connect("button_press_event", on_click)
     plt.show()
 
