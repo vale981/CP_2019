@@ -6,7 +6,7 @@ evolution of a gaussian wavelet (see implementation for details).
 
 Here a scewed two-well potential: x**4 - x**2 - A*x is considered for
 A=0.06 and h_eff=0.07.  The parameters for the gaussian wavelet are:
-width (sigma) = 0.1 p0 (impulse) = 0.
+width (sigma) = 0.1, p0 (impulse) = 0.
 
 Upon a click on the canvas, a gaussian wavelet with its center at the
 x coordinate of the click will be createt and projected onto the
@@ -65,11 +65,11 @@ def initial_error(base, coeff, initial, points):
     :param coeff: the projection coefficients of the wave function
     :param points: the x coordinates of the discretization
 
-    :returns: the euklidean norm of the deviation `reconstructed - originial`
+    :returns: the scalar-product norm of the deviation `reconstructed - oriinial`
     """
 
-    diffs = base @ coeff - initial(points)
-    return np.linalg.norm(diffs)
+    diffs = base @ coeff - initial(points)  # discetized difference function
+    return np.sqrt((points[1] - points[0]) * np.sum(np.abs(diffs)**2)) # integral
 
 def expected_energy_value(energies, coeff):
     """
@@ -101,15 +101,15 @@ def time_evolution(base, energies, coeff, h_eff):
     return wave_function
 
 def animate_time_evolution(base, energies, points, h_eff,
-                           wavelet_params, fig, ax):
+                           wavelet_params, scaling, fig, ax):
     """Plot an animation of the evolution of a wavelet.
 
     :param base: the projection base
     :param energies: the eigenenergies of the problem
-    :param coeff: the projection coefficients of the wave function
     :param points: the x coordinates of the discretization
     :param h_eff: effective plank constant
     :param wavelet_params: a tuple of (sigma, p0)
+    :param scaling: the scaling factor for the plot
     :param fig: the figure to draw on
     :param ax: the axis to draw on
     """
@@ -185,15 +185,12 @@ def animate_time_evolution(base, energies, points, h_eff,
         running = True  # signal running state
         start = time.time()  # set the initial time
 
-        # calculate a scaling fator for the plot
-        scaling = np.median(energies[1:10] - energies[0:9]) * 0.8
-
         # animate unit the exit flag is signaled
         while not exit_flag:
             # calculate the time difference to get a realtime plot
             dt = time.time() - start
             wave = np.abs(time_dep_wavelet(dt))**2
-            wave = scaling/max(wave) * wave
+            wave = scaling * wave
 
             # plot the wave at its energy
             line[0].set_ydata(energy + wave)
@@ -209,7 +206,6 @@ def animate_time_evolution(base, energies, points, h_eff,
     def set_exit_flag(_):
         nonlocal exit_flag
         exit_flag = True
-
     fig.canvas.mpl_connect('close_event', set_exit_flag)
 
     # listen to clicks on the canvas
@@ -223,14 +219,15 @@ def main():
     A = 0.06  # skewnes
 
     # numeric parameters
-    h_eff = 0.07  # effective reduced plank constant
+    h_eff = 0.01  # effective reduced plank constant
     interval = (-2, 2)  # the discretization intervalc (for V < oo)
     N = 500  # discretization point-count
 
     # wavelet parameters
     sigma = 0.1  # width
     p0 = 0  # impulse
-    wavelet_params = (sigma, p0) # combine them for easier handling
+    wavelet_params = (sigma, p0)  # combine them for easier handling
+    scaling = 0.01  # plot scaling
 
     print(__doc__)
 
@@ -243,11 +240,14 @@ def main():
 
     # st up the plot and draw the potenial
     fig, ax = plt.subplots(1, 1)
-    qm.plot_eigenfunktionen(ax, e, phi, points, potential)
+    qm.plot_eigenfunktionen(ax, e, phi, points, potential,
+                            betragsquadrat=True, fak=scaling)
+    ax.set_title("Asym. Two-Well Potential, Time evolution of a Wavelet")
+    ax.set_ylabel("Potential, Eigenfunctions and Wavelet (norm squared)")
 
     # start the animation listener
-    animate_time_evolution(phi, e, points, h_eff, wavelet_params, fig,
-                          ax)
+    animate_time_evolution(phi, e, points, h_eff, wavelet_params,
+                           scaling, fig, ax)
     plt.show()
 
 if __name__ == '__main__':
@@ -290,12 +290,12 @@ Allgmeienes:
     - mehr p => mehr energie
 
     - der fehler in der Entwicklung in eigenfunktionen ist sehr klein
-      (mehr als akzeptabel) in der GO von 10^-12 bis 10^-14
+      (mehr als akzeptabel) in der GO von 10^-30
 
-    - mit groesseren zeiten wird das wellenpacket unzuverlaessiger, da
-      nun auch terme hoeherer Energie mit groesserem Fehler einfluss
-      nehmen (zerlaufen), bei packeten in den Minima ist dieses
-      Problem jedoch gering
+    - mit groesseren energien wird das wellenpacket unzuverlaessiger,
+      da nun auch terme hoeherer Energie mit groesserem Fehler
+      einfluss nehmen (zerlaufen), bei packeten in den Minima ist
+      dieses Problem jedoch gering
 
     - packete die am rand (mit grosser energie) gestartet werden sind
       verfaelscht, da dass gauss packet nicht genug raum zum abfallen
