@@ -107,7 +107,7 @@ def main(N=6, R=10000, dt=5):
 
     # calculate the moments
     mu = pressures.mean()
-    sigma = pressures.std()
+    sigma = pressures.std(ddof=1)  # empirical
 
     # plotting
     fig, ax = set_up_plot((pressures.min(), pressures.max()))
@@ -148,7 +148,8 @@ Fuer N=60 stimmt die Form schon erheblich besser mit der
 normalverteilung ueberein.  Wo das maximum bei N=6 noch weit links
 ~0.6 neben dem der Normalverteilung liegt decken sich die maxima bei
 N=60 fast wobei auch hier ein leichter bias nach links zu erkennen
-ist.
+ist.  Im allgemeinen liegt (an den Raendern!) die Verteilung bei
+kleinen Druecken unter und bei hoeheren ueber der gauss vert.
 
 Erwartungswert
 ==============
