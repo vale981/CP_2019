@@ -14,10 +14,9 @@ state will be created and animated through time.
 import time
 from functools import partial
 import numpy as np
+from matplotlib.colors import BoundaryNorm
 import matplotlib.pyplot as plt
-import matplotlib
 import quantenmechanik as qm
-import pdb
 
 def coherent_state(h_eff, points, x0, p0):
     """A gaussian wavelet as the base of the coherent state.
@@ -107,8 +106,9 @@ def husimi_transform(points, h_eff, husimi_res, interval):
     # bind the calculated matrix to a function for efficient reuse, as
     # this is the only recurring calculation
     def fold(wavelet):
-        return 1/h_eff \
-            * np.abs(husimi_moll.dot(wavelet)).T**2
+        folded = husimi_moll.dot(wavelet)
+        return 1/(2*np.pi*h_eff) \
+            * np.real(folded.conjugate()*folded).T  # im == 0, cut it out
 
     return fold
 
@@ -133,7 +133,7 @@ def set_up_plot(interval):
 
     return fig, ax
 
-def handle_mouse_click(fig, ax, base, energies, points, interval,
+def handle_mouse_click(ax, base, energies, points, interval,
                        husimi_res, h_eff, tmax, t_stretch, event):
     """Starts a new dynamic plot of the time evolution of the husimi
     phase space.
@@ -170,7 +170,6 @@ def handle_mouse_click(fig, ax, base, energies, points, interval,
     hus_plot = ax.imshow(initial_transform, extent=(*interval[0],
                                                     *interval[1]),
                          origin='lower', cmap='binary')
-    # bar = fig.colorbar(hus_plot, orientation='horizontal')
     event.canvas.draw()
 
     # set up timing
@@ -180,18 +179,18 @@ def handle_mouse_click(fig, ax, base, energies, points, interval,
     # animate unit the exit flag is signaled
     while dt < tmax:
         # calculate the time difference to get a realtime plot
-        dt = time.time() - start
-        wave = wavelet(dt*t_stretch)
+        dt = t_stretch*(time.time() - start)
+        wave = wavelet(dt)
 
         # plot the wave at its energy
         transform = husini(wave)
         hus_plot.set_data(transform)
-         # trigger a redraw
+
+        # trigger a redraw
         event.canvas.flush_events()
         event.canvas.draw()
 
     # clean up after ourselves
-    # bar.remove()
     hus_plot.remove()
 
 def draw_contour(fig, ax, potential, interval):
@@ -209,12 +208,15 @@ def draw_contour(fig, ax, potential, interval):
 
     # calculate the energies from the hamiltonian
     energies = p_p**2/2 + potential(p_x)
-    levels = np.percentile(energies, np.linspace(0,100,17))
-    norm = matplotlib.colors.BoundaryNorm(levels,256)
+    levels = np.percentile(energies, np.linspace(0, 100, 20))
+    norm = BoundaryNorm(levels, 256)
 
     # draw the contour + colorbar
-    ct = ax.contour(p_x, p_p, energies, levels=levels, cmap='YlOrRd', norm=norm)
-    fig.colorbar(ct, format= '%.3f')
+    ct = ax.contour(p_x, p_p, energies, levels=levels, cmap='YlOrRd',
+                    norm=norm)
+    fig.colorbar(ct, format='%.3f',
+                 label="Potential Contours, Classical Trajecotries")
+    ax.legend()
 
 def main():
     """Dispatch the main logic. Used as convenience.
@@ -224,14 +226,16 @@ def main():
     A = 0.06  # skewnes
 
     # numeric parameters
-    h_eff = 0.01  # effective reduced plank constant
+    h_eff = 0.07  # effective reduced plank constant
     interval = ((-2, 2), (-2, 2))  # the discretization interval (for
                                    # V < oo) and the impulse interval
+                                   # (x, p)
     N = 500  # discretization point-count
     husimi_res = (100, 100)  # grid steps per dimension (xres, pres)
 
-    t_max = 12
-    t_stretch = 1  # real-time
+    # render parameters
+    t_max = 12  # simulation time
+    t_stretch = 1  # time stretching factor
 
     # wavelet parameters
     print(__doc__)
@@ -244,10 +248,15 @@ def main():
     e, phi = qm.diagonalisierung(h_eff, points, potential)
 
     fig, ax = set_up_plot(interval)
+    delta = np.round((interval[0][1]-interval[0][0])/N, 4)
+
+    fig.text(0, 0,
+             fr"$N={N}$, $\delta={delta}$ " + \
+             fr"Husimi Resolution $(x,p)={husimi_res}$")
 
     draw_contour(fig, ax, potential, interval)
 
-    on_click = partial(handle_mouse_click, fig, ax, phi, e, points, interval,
+    on_click = partial(handle_mouse_click, ax, phi, e, points, interval,
                        husimi_res, h_eff, t_max, t_stretch)
     fig.canvas.mpl_connect("button_press_event", on_click)
 
@@ -266,10 +275,13 @@ sie dort im allgemeinen konzentriert.  Die bewegung des punktes
 groesster Dichte erfolg ungefaehr auf der klassischen bahn, wenn auch
 die geschwindigkeit der Veraenderung der darstellung fuer grosse p
 nicht unnbedingt die schnellste ist.  In x richtung ist das packet an
-den umkehrpunten langsam und in p richtung am schnellsten, wie es
-klassisch zu erwarten ist.  Dieses verhalten zeigt sich bei den
-meisten Energien.  Allerdings ueberdeckt das Packet viele verschieden
-trajektorien.
+den umkehrpunten langsam und in p richtung am schnellsten (umso
+schneller je hoeher die energie), wie es klassisch zu erwarten ist.
+Dieses verhalten zeigt sich bei den meisten Energien.  Allerdings
+ueberdeckt das Packet viele verschieden trajektorien.
+
+Folgende Betrachtungen fuer relativ kleine x, |x| <~ 0.8:
+=========================================================
 
 Fuer groessere Energien unterhalb (-0.55, -0.47) der Separatrix ist
 eine zunehmnde Auteilung auf bahnen um beide Minima zu beobachten.
@@ -281,34 +293,44 @@ moeglich.
 Auf Bahnen in der Naehe der Separatrix (-0.6, -0.7), die klassisch um
 beide Minima fuehren, bewegt sich das Packet kurz klassisch, um sich
 dann aufzuteilen, als wuerde es die Minima `umbranden`, was ebenfalls
-klassich kein Analog findet.
+klassich kein Analog findet.  Uebeer lange Zeiten fasert das Packet
+nicht allzu sehr auf.
 
 Genau auf der Separatrix zerlaeuft das Packet gleichmaessig in beide
 Richtungen.  (klassische wuerde es sich fuer eine entscheiden).  Bei
 energien weiter oberhalb der Sep.  folgt das packet recht lang (ca.
 eine periode) der klassischen Trajektorie in kompakter Form um sich
 dann weiter auf die gesammte bahn aufzuteilen.  Dabei bleibt das
-Packet auf einen Schlauch um die Klassische Bahn begrenzt.  Fuer
-grosse zeiten konzentriert sich das Packet wieder kurz zu einer
-Kompakten Form und der zueklus beginnt von neuem.  (=> Grosse Energie
-=> klassik)
+Packet auf einen (mit unter recht breiten) Schlauch um die Klassische
+Bahn begrenzt.  Fuer grosse zeiten konzentriert sich das Packet wieder
+kurz zu einer Kompakteren Form und der zueklus beginnt von neuem.  (=>
+Grosse Energie => klassik)
 
-Bei laengerer Beobachtung faellt auf, dass sich `verbotene` bereiche
-(an denne sich das teilchen nie befindet) relativ formfest bleiben
-(gauss punkt) und auch teilweise den klassischen Bahnen folgen.
+Bei laengerer Beobachtung faellt auf, dass sich `verbotene` inseln (an
+denen die husimi funktion klein ist) umgeben von bereichen groesserer
+Werte relativ formfest bleiben (gauss punkt) und auch teilweise den
+klassischen Bahnen folgen.
 
-Auch hat die wahl des Anfangspunktes auf der einer Klassischen
-Trajektorie einen effekt, der jedoch mit der Zeit verschwimmt (das
-Packet vergisst...).
+Nun die anders herum:
+=====================
+
+Falls das packet auf einem Punkt mit kleinem impuls und grossem Ort
+gestartertet wird, laeuft es im allgemeinen breiter und auch
+periodizitaeten wie oben bemerkt treten sehr selten auf.  Eine
+erklaerung koennte in der Ueberdeckung von mehr energien (also
+Phasenraumbahnen), die an diesen punkten dichter liegen, durch das
+anfangswellenpacket sein.  Klassisch waehren alle Punkte einer Energie
+gleichberechtigt.
 
 b) h_eff ist nun relativ klein, die Eigenenrgien sind dicht.  In den
 minima bewegt sich das Packet auch bei kleinen Energien energien in
 relativ kompakter Form und zerfasert/rekombiniert periodisch.
 Quanteneffekte treten weiterhin in der Naehe der Separatrix auf.
 
-Bei hoeheren energien bleibt das Packet nun sehr lange in fester form
-und relativ konzentriert.  Es folgt den klassischen bahnen sehr genau.
-Es findet also ein Uebergang zur klassischen Mechanik stat.
+Bei hoeheren energien (wobei wir auf kleinen x starten) bleibt das
+Packet nun sehr lange in fester form und relativ konzentriert.  Es
+folgt den klassischen bahnen sehr genau.  Es findet also ein Uebergang
+zur klassischen Mechanik stat.
 
 Bemerkung:
 ==========
@@ -316,4 +338,11 @@ Bemerkung:
 Es ist darauf zu achten die Wellenpackete nicht mit zu grosser Energie
 zu starten, da dann Numerische ungenauigkeiten gross werden koennen.
 (Normierung, endliche eigenwerte...)
+
+Eigentlich sollte der zeichenbereich kleiner als der Rechenbereich
+gewaehlt werden.
+
+Man kann husimi_res ohne Bedenken auf 200 Setzen.  Der Bottleneck ist
+hier pyplot (Man verkleinere das Fenster und das Zeichnen geht viel
+schneller.)
 """
