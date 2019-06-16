@@ -24,7 +24,6 @@ import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 
-import pdb
 def refl_count(x0, v, dt):
     """Calculate the reflection count for one wall.
 
@@ -34,7 +33,7 @@ def refl_count(x0, v, dt):
     :returns: the relfection count in the same shape as x0/v0
     """
 
-    # wee add an offset, beacause we dont start at 0 but at 1
+    # wee add an offset, because we dont start at x=0 but at x=1
     #      floor      way-length  +  offset / max free way length
     return np.uint32((np.abs(x0 + v*dt) + 1)/2)
 
@@ -43,16 +42,16 @@ def pressure(particles, dt):
 
     :param particles: a particle ensemble (x0, v0)
     :param dt: time interval
-    :returns: the pressures
-    :rtype: array
 
+    :returns: the pressures
     """
 
     x0, v = particles
     N = x0.shape[1]
 
     # sum over one axis only -> pressure per realization
-    return 2/(dt*N)*np.sum(np.abs(v)*refl_count(x0, v, dt), axis=1)
+    pressures = np.abs(v)*refl_count(x0, v, dt)
+    return 2/(dt*N)*np.sum(pressures, axis=1)
 
 def make_ensemle(R, N):
     """Generates a particle ensemble of `N` particles in `R`
@@ -102,6 +101,7 @@ def main(N=6, R=10000, dt=5):
     # print user guide, whether he wants it or not :)
     print(__doc__)
 
+    # craft our particles and calculate the pressures
     ensemple = make_ensemle(R, N)
     pressures = pressure(ensemple, dt)
 
@@ -109,9 +109,13 @@ def main(N=6, R=10000, dt=5):
     mu = pressures.mean()
     sigma = pressures.std(ddof=1)  # empirical
 
+    # calculate the number of bins by the Freedman–Diaconis rule
+    bins = int(pressures.max() / \
+                    (stats.iqr(pressures)*2/((len(pressures))**(1/3))))
+
     # plotting
     fig, ax = set_up_plot((pressures.min(), pressures.max()))
-    ax.hist(pressures, bins=100, density=True,
+    ax.hist(pressures, bins=bins, density=True,
             label="$p_A$ propability density",
             color='orange')
 
@@ -123,10 +127,12 @@ def main(N=6, R=10000, dt=5):
 
     ax.legend()
 
+    print(pressures.max()/(stats.iqr(pressures)*2/((len(pressures))**(1/3))))
     # print out parameters
     fig.text(0, 0,
              fr"$N={N}$ $R={R}$ $\Delta t = {dt}$ " +
-             fr"$\mu={np.round(mu, 5)}$ $\sigma={np.round(sigma, 5)}$")
+             fr"$\mu={np.round(mu, 5)}$ $\sigma={np.round(sigma, 5)}$ " +
+             fr"bins=${bins}$")
 
 
     plt.show()
@@ -139,6 +145,10 @@ if __name__ == '__main__':
 ###############################################################################
 
 """
+Anzahl der Bins: es soll eine glatte kurve mit einigem detail zu
+erahnen sein.  80 Bins scheinen mir ein guter kompromiss aus
+Uebersichtlichkeit und massvollem Detail darzustellen.
+
 a)
 
 Form
