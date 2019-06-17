@@ -149,6 +149,8 @@ Anzahl der Bins: es soll eine glatte kurve mit einigem detail zu
 erahnen sein.  80 Bins scheinen mir ein guter kompromiss aus
 Uebersichtlichkeit und massvollem Detail darzustellen.
 
+Die Freedman–Diaconis Regel liefert einen aehnlichen Wert.
+
 a)
 
 Form
