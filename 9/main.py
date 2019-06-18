@@ -1,43 +1,25 @@
 #!/usr/bin/env python3
 """
-TODO
+This programm simulates the diffusion of particles in an environment
+with the diffusion constant D=1, a drift speed v=0.15 and an absorbing
+wall at x_abs=10 by implementing the Langevin-Equation.  At every
+S=100 time steps (dt=0.01), a snapshot of the system (particle
+positions, statistical moments) is being taken.  The simulation runs
+unitl T=30.
+
+One plot dynamicly displays a normalized histogram of the propabilty
+density for the process as well as the analytically obtained prop.
+densities with and w/o absorbing wall.
+
+Three more plots show the simulated (with abs.) and theoretical (w/o.
+abs.) values of the total propability (norm), mean and variance of the
+distributions.
 """
 
-import numpy as np
 from functools import partial
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-
-def set_up_plot(t_max, limits):
-    """Sets up the plot and its parameters.
-
-    :returns: fig, axes (histogram, norm, mean, variance)
-    """
-
-    fig, axes = plt.subplots(2, 2)
-    axes = axes.flatten()
-    ax_hist, ax_norm, ax_mean, ax_var = axes
-
-    for ax in axes[1:]:
-        ax.set_xlabel('t')
-        ax.set_xlim(0, t_max)
-
-    ax_hist.set_title('Histogram of $P(x, t)$')
-    ax_hist.set_xlabel('x')
-    ax_hist.set_xlim(*limits)
-    ax_hist.set_ylabel('$P(x, t)$ Normalized')
-    ax_hist.set_ylim(0, 0.4)
-
-    ax_norm.set_title('Norm of $P(x, t)$ ($R(t)/R(0)$)')
-    ax_norm.set_ylabel('Norm')
-
-    ax_mean.set_title('Mean of $P(x, t)$')
-    ax_mean.set_ylabel('Mean')
-
-    ax_var.set_title('Variance of $P(x, t)$')
-    ax_var.set_ylabel('Variance')
-
-    return fig, axes
 
 def walk_with_snapshots(x, x_abs, D, v, dt, S, t_max):
     """Simulates the diffusion of particles in an environment with the
@@ -55,8 +37,6 @@ def walk_with_snapshots(x, x_abs, D, v, dt, S, t_max):
 
     :returns: particle positions (array), an array with rows of:
               (time, norm, mean, variance)
-
-    :rtype: Tuple
     """
 
     steps = int(t_max / (S*dt))  # step count
@@ -68,7 +48,6 @@ def walk_with_snapshots(x, x_abs, D, v, dt, S, t_max):
     t = 0
 
     for _ in range(steps):
-
         # advance by S steps
         for _ in range(S):
             x = x + v*dt + \
@@ -98,51 +77,41 @@ def norm_dist(x, mu, v):
         *np.exp(-(x-mu)**2/(2*v))
 
 class AnimatedLines():
-    """updates lines in time steps."""
-    def __init__(self, ax, *data, index=0, legend=True, absolute_index=False):
+    """updates lines in time steps. STRIPPED"""
+    def __init__(self, ax, *data):
         """Creates an animated line.
 
         :param ax: axis
-        :param index: initial index
-        :param legend: wether to draw a legend
-        :param absolute_index: wether to reaveal the y_data one-by-one
-            (y_data[:i+1]) or to plot the full y_data[i] for each step
-        :param *data: line data arguments of the form (x_data, y_data,
-            kwargs for ax.plot)
+        :param *data: line data arguments of the form (x_data, y_data, label)
         """
 
         self.ax = ax
         self._data = data
-        self._index = index
+        self._index = 0
         self._orig_lines = self.ax.lines.copy()
-        self._absolute_index = absolute_index
+        self._absolute_index = (self._data[0][0].shape !=
+                                self._data[0][1].shape)
 
         linestyles = list(matplotlib.lines.lineStyles.keys())
+        colors = list(matplotlib.colors.cnames.keys())
         linestyles.remove('None')  # no hidden lines
 
         # init lines
         self._lines = []
-        for i, (x_data, y_data, kwargs) in enumerate(self._data):
-
-            # figure out the linestyle
+        for i, (x_data, y_data, label) in enumerate(self._data):
+            # figure out the linestyle and color
             linestyle = linestyles[i % len(linestyles)]
-            if 'linestyle' in kwargs:
-                linestyle = kwargs['linestyle']
-                del kwargs['linestyle']
+            color = colors[(i+10) % len(colors)]
 
-            # make the lines
+            # make the line
             line = None
-            if self._absolute_index:
-                line = self.ax.plot(x_data, y_data[0],
-                                    linestyle=linestyle, **kwargs)
-            else:
-                line = self.ax.plot(x_data, y_data,
-                                    linestyle=linestyle, **kwargs)
+            y_data = y_data[0] if self._absolute_index else y_data
+            line = self.ax.plot(x_data, y_data, label=label,
+                                    linestyle=linestyle, color=color)
 
             self._lines.append(line)
 
-        if legend:
-            self.ax.legend()
+        self.ax.legend()
 
     def __del__(self):
         """Restores the original lines on the axis."""
@@ -163,27 +132,26 @@ class AnimatedLines():
         """
 
         for i, line in enumerate(self._lines):
+
+            # select the rigth rows
             x_data, y_data, _ = self._data[i]
+            x_data, y_data = (x_data, y_data[self._index]) \
+                if self._absolute_index \
+                else (x_data[:(self._index + 1)], y_data[:(self._index + 1)])
 
-            if self._absolute_index:
-                line[0].set_xdata(x_data)
-                line[0].set_ydata(y_data[self._index])
-
-            else:
-                line[0].set_xdata(x_data[:(self._index + 1)])
-                line[0].set_ydata(y_data[:(self._index + 1)])
+            line[0].set_xdata(x_data)
+            line[0].set_ydata(y_data)
 
 def plot_walk(positions, snapshots, theo_positions, theo_snapshots,
               bins, axes, event):
     """Dymanically plots a histogram of the propability distribution
     of the diffusion simulation as well as the theoretical distr.
-    with and without an absorbing wall.  Three more plots show the
-    simulated (with abs.) and theoretical (w/o.  abs.) values of the
-    total propability (norm), mean and variance of the distributions.
+    with and without an absorbing wall and the norm, mean, and
+    variance of the theoretical and simulated ditstr.
 
     :param positions: the simulated particle positions
     :param snapshots: the snapshots of the statistical moments
-    :param theo_positions: the analytical prop.  densities (without
+    :param theo_positions: the analytical prop.  densities (x, without
         abs., with abs.)
     :param theo_snapshots: the snapshots of the stat.  moments without
         abs.
@@ -205,48 +173,31 @@ def plot_walk(positions, snapshots, theo_positions, theo_snapshots,
     limits = (theo_positions[0].min(), theo_positions[0].max())  # dirty
 
     # set those animations up
-    norm_lines = AnimatedLines(ax_norm,
-                               (t, norms,
-                                 dict(label="Simulated Norm", color='blue')),
-                                (t, t_norms,
-                                 dict(label="Analytical Norm", color='green')))
+    norm_lines = AnimatedLines(ax_norm, (t, norms, "Simulated Norm"),
+                               (t, t_norms, "Analytical Norm"))
 
-    mean_lines = AnimatedLines(ax_mean,
-                               (t, means,
-                                 dict(label="Simulated Mean", color='blue')),
-                                (t, t_means,
-                                 dict(label="Analytical Mean", color='green')))
+    mean_lines = AnimatedLines(ax_mean, (t, means, "Simulated Mean"),
+                               (t, t_means, "Analytical Mean"))
 
     variance_lines = \
-        AnimatedLines(ax_var,
-                      (t, variances,
-                        dict(label="Simulated Variance", color='blue')),
-                       (t, t_variances,
-                        dict(label="Analytical Varance", color='green')))
-
+        AnimatedLines(ax_var, (t, variances, "Simulated Variance"),
+                      (t, t_variances, "Analytical Varance"))
 
     t_pos_line = AnimatedLines(ax_hist,
                                (theo_positions[0], theo_positions[1],
-                                dict(
-                                    label="Theoretical Prop. Dist. w/o Drain",
-                                    color='green')),
+                                "Theoretical Prop. Dist. w/o Drain"),
                                (theo_positions[0], theo_positions[2],
-                                dict(
-                                    label="Theoretical Prop. Dist. w/ Drain",
-                                    color='green')),
-                               absolute_index=True)
+                                "Theoretical Prop. Dist. w/ Drain",))
 
-    # gather 'em
     smart_lines = [norm_lines, mean_lines, variance_lines, t_pos_line]
-
     area = (limits[1] - limits[0])/(bins)  # unit area for one data point
-    for i in range(len(t)):
 
+    for i in range(len(t)):
         # clear the histogr.
         ax_hist.patches = []
 
         # determine the weights and plot the histogram
-        weigths = np.ones_like(positions[i]) / (area*len(positions[i]))*norms[i]
+        weigths = np.ones_like(positions[i])/(area*len(positions[i]))*norms[i]
         ax_hist.hist(positions[i], bins=100, range=limits,
                      weights=weigths, color='blue', density=False)
 
@@ -260,16 +211,23 @@ def plot_walk(positions, snapshots, theo_positions, theo_snapshots,
 
 def theoretical_diffusion(x0, v, t, D, limits):
     """Calculate the theor. prop. distr. with and w/o abs. wall.
-    Parameters: see main
-    :returns: (x, prop. dist, prop di)
+
+    :param x0: inital position
+    :param v: drift speed
+    :param t: snapshot times step
+    :param D: diff.  constant
+    :param limits: the spatial constraints (x_min, x_abs)
+
+    :returns: (x, prop. dist, prop dist with wall)
     """
 
-    x = np.linspace(*limits, 1000)[:, None]
-    x_abs = limits[1]
-    means = x0 + v*t
-    variances = 2*D*t
+    x = np.linspace(*limits, 1000)[:, None]  # eval points
+    x_abs = limits[1]  # wall
+    means = x0 + v*t  # means
+    variances = 2*D*t  # variances
 
     t = t[None, :]
+    t[t == 0] = 0.1  # ~delta limit
     positions = norm_dist(x, x0 + v*t, 2*D*t)  # without absorbtion
     positions_abs = positions \
         - norm_dist(x, 2*x_abs - x0 + v*t, 2*D*t) \
@@ -299,16 +257,36 @@ def main():
     # print user guide, whether he wants it or not :)
     print(__doc__)
 
-    fig, axes = set_up_plot(t_max, limits)
+    # do it here, conserves lines :)
+    fig, axes = plt.subplots(2, 2)
+    axes = axes.flatten()
+    ax_hist, ax_norm, ax_mean, ax_var = axes
 
-    # initialize the ensemple
+    for ax in axes[1:]:
+        ax.set_xlabel('t')
+        ax.set_xlim(0, t_max)
+
+    ax_hist.set_title('$P(x, t)$')
+    ax_hist.set_xlabel('x')
+    ax_hist.set_xlim(*limits)
+    ax_hist.set_ylabel('$P(x, t)$')
+    ax_hist.set_ylim(0, 0.4)
+
+    ax_norm.set_title('Norm of $P(x, t)$ ($R(t)/R(0)$)')
+    ax_norm.set_ylabel('Norm')
+
+    ax_mean.set_title('Mean of $P(x, t)$')
+    ax_mean.set_ylabel('$\mu$')
+
+    ax_var.set_title('Variance of $P(x, t)$')
+    ax_var.set_ylabel('$\sigma^2$')
+
+    # initialize the ensemple and simulate part. movement
     x = np.ones(R)*x0
-
-    # simulate particle movement
-    positions, snapshots = walk_with_snapshots(x, limits[1], D, v, dt, S, t_max)
-    theo_positions, theo_snapshots = theoretical_diffusion(x0, v,
-                                                           snapshots.T[0],
-                                                           D, limits)
+    positions, snapshots = \
+        walk_with_snapshots(x, limits[1], D, v, dt, S, t_max)
+    theo_positions, theo_snapshots = \
+        theoretical_diffusion(x0, v, snapshots.T[0], D, limits)
 
     # handle clicks and show plot
     on_click = partial(plot_walk, positions, snapshots,
@@ -318,12 +296,45 @@ def main():
     plt.show()
 
 if __name__ == '__main__':
-    main()
-
-###############################################################################
-#                                  Diskussion                                 #
-###############################################################################
+    main() # 299 Lines!
 
 """
-TODO
+a) Der absorbierende Rand entfernt Teilchen aus dem Modell und
+veringert somit die Norm ab ca.  t=3.8 merklich.  (Sie faellt
+annaehernd linear, wie es ein konstantes v-drift bedingt) Der
+mittelwert der Verteilung wandert ab dieser Zeit nicht mehr mit
+v_drift nach rechts sondern kehrt ab t~=10 sogar nach links um.  Da
+die Verteilung durch v_drift und den rand nur beding breitlaufen kann
+steigt auch die Varianz immer weniger an (divergiert von theorie ab
+t~=5).  Die Form der Warscheinlichkeitsverteilung schein sich
+'anzustauen' da nur teilchem mit geringerem impuls 'ueberleben'.
+Gleichzeitig bewegen sich teilchen in der Naehe der Wand nicht weit
+von selbiger fort und werden durch die Driftgeschwindigkeit nach
+kurzerzeit in diese hineinbewegt.  Somit geht auch das Histogram in
+Wandnaehe gegen null.  Schaltet man die Absorbtion ab folgt die
+Simulation sehr gut den Theoretischen zusammenthaengen.
+
+b) Am meisten aendert sich die Vert.  bei x=x_abs als bei der
+absorbierenden wand.  Das histogram folgt an anderen Orten immer noch
+sehr gut der theoretichen Kurve doch liegt in der Naehe der Wand
+deutlich ueber selbiger.  Tatsaechlich werden geringfuegig weniger
+Teilchen Absorbiert.  Es vergeht nun mehr zeit zwischen
+Geschwindigkeits- und Bewegungsrichtungsaenderung, es werden groessere
+Spruenge gemacht.  Die verteilung naehert sich fuer grosse
+Zeitschritte immer mehr der Verteilung ohne abfluss an.  Durch die
+groesseren sprunge konnen sich teilchen nun weit genug weg von der
+wand weg bewegen um erst viel spaeter absorbiert zu werden.  Es findet
+weniger Selektion stat und somit wird auch die Form der Verteilung
+weniger durch die Wand beeinflusst.
+
+c) Fuer v=0.5 nimmt der Aufstaueffekt zu (maximum der Vert.  wandert
+nach rechts).  Es werden mehr teilchen absorbiert, wobei sich die
+abnahme Norm parabelartig abflacht.  Der mittelwert erreicht ein
+plateau ab ca t=5 (x=3) und auch die Varanz bleibt ab dieser zeit
+ungefaehr konstant.  Die teilchen driften nun so schnell nach rechts,
+dass sich Breitlaufen und Absorbtion die Wage halten (nach links
+limitiert durch den Drift, nach rechts durch die Wand + Drift).  Die
+teilchen kommen in einem Teilschritt weiter nach rechts, kommen der
+Wand naeher und werden sicherer absorbiert.  Die Uebereinstimmung mit
+der Theoretischen Kurve ist immer noch sehr gut.
 """
