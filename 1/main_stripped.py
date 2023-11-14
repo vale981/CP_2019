@@ -13,7 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 # use Cairo for performance
-matplotlib.use('GTK3Agg', warn=False, force=True)
+matplotlib.use("GTK3Agg", warn=False, force=True)
 
 # NOTE: this is a stripped down version of the real thing (hence the
 # remnants of oo design), which is included for your enjoyment
@@ -34,7 +34,7 @@ ax.clear()
 
 # set up the axis
 ax.set_title("Standard Map")
-ax.set_aspect('equal')
+ax.set_aspect("equal")
 
 # set up limits and labels
 ax.set_xlim([0, 2 * np.pi])
@@ -78,8 +78,8 @@ def get_standard_map(theta_0, p_0, K, N):
     """
 
     # Initialize the arrays
-    theta = np.zeros(N + 1)  # Start Point + N
-    p = np.zeros(N + 1)
+    theta = np.empty(N + 1)  # Start Point + N
+    p = np.empty(N + 1)
 
     # set the initial parameters
     norm_p = get_normalizer(2 * np.pi, -np.pi)
@@ -107,7 +107,7 @@ def _draw_on_click(event):
 
     # only accept "normal", lef-clicks
     mode = event.canvas.toolbar.mode
-    if not (event.button == 1 and event.inaxes == ax and mode == ''):
+    if not (event.button == 1 and event.inaxes == ax and mode == ""):
         return
 
     draw(get_standard_map(event.xdata, event.ydata, _K, _N))
@@ -119,9 +119,10 @@ def draw(points):
     :param points: 2D Numpy array of x and y coordinates (2, N)
     """
 
-    ax.plot(*points, linestyle='None', marker='o', markersize=_POINT_SIZE)
+    ax.plot(*points, linestyle="None", marker="o", markersize=_POINT_SIZE)
     fig.canvas.draw()
     fig.canvas.flush_events()  # don't draw twice
+
 
 ###########################################################################
 #                                 Helpers                                 #
@@ -137,15 +138,16 @@ def get_normalizer(interval, offset):
     :returns: a normalizer function
     :rtype: function
     """
+
     def normalize(value):
         return ((value - offset) % interval) + offset
 
     return normalize
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # register events
-    fig.canvas.mpl_connect('button_press_event', _draw_on_click)
+    fig.canvas.mpl_connect("button_press_event", _draw_on_click)
     plt.show()  # block until figure closed
 
 

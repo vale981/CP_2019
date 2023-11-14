@@ -18,6 +18,7 @@ from matplotlib.colors import BoundaryNorm
 import matplotlib.pyplot as plt
 import quantenmechanik as qm
 
+
 def coherent_state(h_eff, points, x0, p0):
     """A gaussian wavelet as the base of the coherent state.
 
@@ -30,11 +31,15 @@ def coherent_state(h_eff, points, x0, p0):
 
     """
 
-    sigma = np.sqrt(h_eff/2)
-    norm = 1/(2*np.pi*sigma**2)**(1/4)
+    sigma = np.sqrt(h_eff / 2)
+    norm = 1 / (2 * np.pi * sigma ** 2) ** (1 / 4)
 
-    return norm*np.exp(-(points-x0)**2/(4*sigma**2)) \
-        *np.exp(1j/h_eff*p0*points)
+    return (
+        norm
+        * np.exp(-((points - x0) ** 2) / (4 * sigma ** 2))
+        * np.exp(1j / h_eff * p0 * points)
+    )
+
 
 def two_well_potential(x, A):
     """A scewed two-well potential.
@@ -43,7 +48,8 @@ def two_well_potential(x, A):
     :returns: the potential at point x, i.e. V(x)
     """
 
-    return x**4 - x**2 - A*x
+    return x ** 4 - x ** 2 - A * x
+
 
 def projection_coeff(base, initial, points):
     """Calculate the projection coefficients for a wave function at
@@ -57,6 +63,7 @@ def projection_coeff(base, initial, points):
 
     dx = np.abs(points[1] - points[0])
     return dx * (base.conjugate().T @ initial)
+
 
 def time_evolution(base, energies, coeff, h_eff):
     """Get the time evolution of a given wave function.
@@ -74,9 +81,10 @@ def time_evolution(base, energies, coeff, h_eff):
 
     # close over the function parameters
     def wave_function(t):
-        return base @ (np.exp(-1j*energies/h_eff * t) * coeff)
+        return base @ (np.exp(-1j * energies / h_eff * t) * coeff)
 
     return wave_function
+
 
 def husimi_transform(points, h_eff, husimi_res, interval):
     """Calculate a discreized husimi field (2D/3D matrix).
@@ -99,18 +107,21 @@ def husimi_transform(points, h_eff, husimi_res, interval):
 
     # generate a 3D matrix with a coherent state for each point as
     # discrete vector
-    husimi_moll = coherent_state(h_eff, points[None, None, :],
-                                 loci[:, None, None], impulses[None, :, None])
+    husimi_moll = coherent_state(
+        h_eff, points[None, None, :], loci[:, None, None], impulses[None, :, None]
+    )
     husimi_moll = dx * husimi_moll.conjugate()
 
     # bind the calculated matrix to a function for efficient reuse, as
     # this is the only recurring calculation
     def fold(wavelet):
         folded = husimi_moll.dot(wavelet)
-        return 1/(2*np.pi*h_eff) \
-            * np.real(folded.conjugate()*folded).T  # im == 0, cut it out
+        return (
+            1 / (2 * np.pi * h_eff) * np.real(folded.conjugate() * folded).T
+        )  # im == 0, cut it out
 
     return fold
+
 
 def set_up_plot(interval):
     """Sets up the plots and their parameters.
@@ -119,13 +130,13 @@ def set_up_plot(interval):
     """
 
     fig, ax = plt.subplots(1, 1)
-    ax.set_title('Husimi Phase Space Representation')
+    ax.set_title("Husimi Phase Space Representation")
 
-    ax.set_xlabel(r'$x$')
-    ax.set_ylabel(r'$p$')
+    ax.set_xlabel(r"$x$")
+    ax.set_ylabel(r"$p$")
 
     # set fixed aspect ratio
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
 
     # fix the limits
     ax.set_xlim(*interval[0])
@@ -133,8 +144,10 @@ def set_up_plot(interval):
 
     return fig, ax
 
-def handle_mouse_click(ax, base, energies, points, interval,
-                       husimi_res, h_eff, tmax, t_stretch, event):
+
+def handle_mouse_click(
+    ax, base, energies, points, interval, husimi_res, h_eff, tmax, t_stretch, event
+):
     """Starts a new dynamic plot of the time evolution of the husimi
     phase space.
 
@@ -152,7 +165,7 @@ def handle_mouse_click(ax, base, energies, points, interval,
 
     # only react if not zooming
     mode = event.canvas.toolbar.mode
-    if event.button != 1 or mode != '' or event.inaxes is not ax:
+    if event.button != 1 or mode != "" or event.inaxes is not ax:
         return
 
     # create the initial wavelet and project it to the eigenbase
@@ -167,9 +180,12 @@ def handle_mouse_click(ax, base, energies, points, interval,
     initial_transform = husini(initial_wavelet)
 
     # plot the husimi matrix
-    hus_plot = ax.imshow(initial_transform, extent=(*interval[0],
-                                                    *interval[1]),
-                         origin='lower', cmap='binary')
+    hus_plot = ax.imshow(
+        initial_transform,
+        extent=(*interval[0], *interval[1]),
+        origin="lower",
+        cmap="binary",
+    )
     event.canvas.draw()
 
     # set up timing
@@ -179,7 +195,7 @@ def handle_mouse_click(ax, base, energies, points, interval,
     # animate unit the exit flag is signaled
     while dt < tmax:
         # calculate the time difference to get a realtime plot
-        dt = t_stretch*(time.time() - start)
+        dt = t_stretch * (time.time() - start)
         wave = wavelet(dt)
 
         # plot the wave at its energy
@@ -193,6 +209,7 @@ def handle_mouse_click(ax, base, energies, points, interval,
     # clean up after ourselves
     hus_plot.remove()
 
+
 def draw_contour(fig, ax, potential, interval):
     """Plot contour lines for the potential.
 
@@ -202,21 +219,19 @@ def draw_contour(fig, ax, potential, interval):
     """
 
     # create a grid for the energy calculation
-    coordinates = np.linspace(*interval[0], 1000), \
-        np.linspace(*interval[1], 1000)
+    coordinates = np.linspace(*interval[0], 1000), np.linspace(*interval[1], 1000)
     p_x, p_p = np.meshgrid(*coordinates)
 
     # calculate the energies from the hamiltonian
-    energies = p_p**2/2 + potential(p_x)
+    energies = p_p ** 2 / 2 + potential(p_x)
     levels = np.percentile(energies, np.linspace(0, 100, 20))
     norm = BoundaryNorm(levels, 256)
 
     # draw the contour + colorbar
-    ct = ax.contour(p_x, p_p, energies, levels=levels, cmap='YlOrRd',
-                    norm=norm)
-    fig.colorbar(ct, format='%.3f',
-                 label="Potential Contours, Classical Trajecotries")
+    ct = ax.contour(p_x, p_p, energies, levels=levels, cmap="YlOrRd", norm=norm)
+    fig.colorbar(ct, format="%.3f", label="Potential Contours, Classical Trajecotries")
     ax.legend()
+
 
 def main():
     """Dispatch the main logic. Used as convenience.
@@ -228,8 +243,8 @@ def main():
     # numeric parameters
     h_eff = 0.07  # effective reduced plank constant
     interval = ((-2, 2), (-2, 2))  # the discretization interval (for
-                                   # V < oo) and the impulse interval
-                                   # (x, p)
+    # V < oo) and the impulse interval
+    # (x, p)
     N = 500  # discretization point-count
     husimi_res = (100, 100)  # grid steps per dimension (xres, pres)
 
@@ -248,21 +263,34 @@ def main():
     e, phi = qm.diagonalisierung(h_eff, points, potential)
 
     fig, ax = set_up_plot(interval)
-    delta = np.round((interval[0][1]-interval[0][0])/N, 4)
+    delta = np.round((interval[0][1] - interval[0][0]) / N, 4)
 
-    fig.text(0, 0,
-             fr"$N={N}$, $\delta={delta}$ " + \
-             fr"Husimi Resolution $(x,p)={husimi_res}$")
+    fig.text(
+        0,
+        0,
+        fr"$N={N}$, $\delta={delta}$ " + fr"Husimi Resolution $(x,p)={husimi_res}$",
+    )
 
     draw_contour(fig, ax, potential, interval)
 
-    on_click = partial(handle_mouse_click, ax, phi, e, points, interval,
-                       husimi_res, h_eff, t_max, t_stretch)
+    on_click = partial(
+        handle_mouse_click,
+        ax,
+        phi,
+        e,
+        points,
+        interval,
+        husimi_res,
+        h_eff,
+        t_max,
+        t_stretch,
+    )
     fig.canvas.mpl_connect("button_press_event", on_click)
 
     plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 
 ###############################################################################

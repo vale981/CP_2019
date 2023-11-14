@@ -24,6 +24,7 @@ import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 
+
 def refl_count(x0, v, dt):
     """Calculate the reflection count for one wall.
 
@@ -35,7 +36,8 @@ def refl_count(x0, v, dt):
 
     # wee add an offset, because we dont start at x=0 but at x=1
     #      floor      way-length  +  offset / max free way length
-    return np.uint32((np.abs(x0 + v*dt) + 1)/2)
+    return np.uint32((np.abs(x0 + v * dt) + 1) / 2)
+
 
 def pressure(particles, dt):
     """Calculate the pressure on the unit surface averaged over time.
@@ -50,8 +52,9 @@ def pressure(particles, dt):
     N = x0.shape[1]
 
     # sum over one axis only -> pressure per realization
-    pressures = np.abs(v)*refl_count(x0, v, dt)
-    return 2/(dt*N)*np.sum(pressures, axis=1)
+    pressures = np.abs(v) * refl_count(x0, v, dt)
+    return 2 / (dt * N) * np.sum(pressures, axis=1)
+
 
 def make_ensemle(R, N):
     """Generates a particle ensemble of `N` particles in `R`
@@ -74,6 +77,7 @@ def make_ensemle(R, N):
 
     return x0, v
 
+
 def set_up_plot(xlim):
     """Sets up the plot and its parameters.
 
@@ -81,13 +85,14 @@ def set_up_plot(xlim):
     """
 
     fig, ax = plt.subplots(1, 1)
-    ax.set_title('$p_A$ Histogram')
+    ax.set_title("$p_A$ Histogram")
 
-    ax.set_xlabel(r'$p_A$')
-    ax.set_ylabel(r'$P(p_A)$')
+    ax.set_xlabel(r"$p_A$")
+    ax.set_ylabel(r"$P(p_A)$")
 
     ax.set_xlim(*xlim)
     return fig, ax
+
 
 def main(N=6000, R=10000, dt=5):
     """Set model parameters and Dispatch the main logic.  Used as
@@ -115,29 +120,39 @@ def main(N=6000, R=10000, dt=5):
 
     # plotting
     fig, ax = set_up_plot((pressures.min(), pressures.max()))
-    ax.hist(pressures, bins=bins, density=True,
-            label="$p_A$ propability density",
-            color='orange')
+    ax.hist(
+        pressures,
+        bins=bins,
+        density=True,
+        label="$p_A$ propability density",
+        color="orange",
+    )
 
     # gaussian referece curve
     x = np.linspace(0, pressures.max(), 1000)
-    ax.plot(x, stats.norm.pdf(x, mu, sigma),
-            label="reference normal distribution",
-            color="blue")
+    ax.plot(
+        x,
+        stats.norm.pdf(x, mu, sigma),
+        label="reference normal distribution",
+        color="blue",
+    )
 
     ax.legend()
 
-    print(pressures.max()/(stats.iqr(pressures)*2/((len(pressures))**(1/3))))
+    print(pressures.max() / (stats.iqr(pressures) * 2 / ((len(pressures)) ** (1 / 3))))
     # print out parameters
-    fig.text(0, 0,
-             fr"$N={N}$ $R={R}$ $\Delta t = {dt}$ " +
-             fr"$\mu={np.round(mu, 5)}$ $\sigma={np.round(sigma, 5)}$ " +
-             fr"bins=${bins}$")
-
+    fig.text(
+        0,
+        0,
+        fr"$N={N}$ $R={R}$ $\Delta t = {dt}$ "
+        + fr"$\mu={np.round(mu, 5)}$ $\sigma={np.round(sigma, 5)}$ "
+        + fr"bins=${bins}$",
+    )
 
     plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 
 ###############################################################################

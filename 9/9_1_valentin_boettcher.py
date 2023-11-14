@@ -283,7 +283,7 @@ def main():
         ax.set_xlabel("t")
         ax.set_xlim(0, t_max)
 
-    ax_hist.set_title("$P(x, t)$")
+    ax_hist.set_title("$Simulated and Analytical P(x, t)$")
     ax_hist.set_xlabel("x")
     ax_hist.set_xlim(*limits)
     ax_hist.set_ylabel("$P(x, t)$")

@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.optimize import minimize_scalar
 
+
 def hamiltonian(x, p, A):
     """The hamiltonian for B = 0
 
@@ -45,7 +46,8 @@ def hamiltonian(x, p, A):
     :rtype: number
     """
 
-    return p**2/2 + x**4 - x**2 + x*A
+    return p ** 2 / 2 + x ** 4 - x ** 2 + x * A
+
 
 def draw_energy_countour(axes, A):
     """Draws the energy contour lines of the hamiltonian.  (= orbits
@@ -66,14 +68,15 @@ def draw_energy_countour(axes, A):
     levels = np.linspace(-0.4, 0.3, 10)
 
     # find the local potential maximum => separatrix (p = 0)
-    separatrix = -minimize_scalar(lambda x: -hamiltonian(x, 0, A),
-                                 bounds=[-1,1], method='bounded').fun
+    separatrix = -minimize_scalar(
+        lambda x: -hamiltonian(x, 0, A), bounds=[-1, 1], method="bounded"
+    ).fun
 
     # plot the contours on both axes
     for ax in axes:
-        ax.contour(p_x, p_p, energies, alpha=0.4, cmap='gray', levels=levels)
-        ax.contour(p_x, p_p, energies, alpha=0.4, cmap='hot',
-                             levels=[separatrix])
+        ax.contour(p_x, p_p, energies, alpha=0.4, cmap="gray", levels=levels)
+        ax.contour(p_x, p_p, energies, alpha=0.4, cmap="hot", levels=[separatrix])
+
 
 def rhs(y, t, A, B, omega):
     """The right hand side of the equation of motion.
@@ -87,10 +90,10 @@ def rhs(y, t, A, B, omega):
     """
 
     x, p = y
-    return np.array([p, -4*x**3 + 2*x - A - B*np.sin(omega*t)])
+    return np.array([p, -4 * x ** 3 + 2 * x - A - B * np.sin(omega * t)])
 
-def add_trajectory(axes, periods, steps_per_period,
-                   initial_conditions, args):
+
+def add_trajectory(axes, periods, steps_per_period, initial_conditions, args):
     """Calculates the trajectory and stroboscopic trajecotry from the
     the gives initial conditions and draws them in their respective
     subplots.
@@ -109,24 +112,33 @@ def add_trajectory(axes, periods, steps_per_period,
     _, _, omega = args
 
     # solve the DE, precise multiples of 2*pi/omega
-    t_range = np.arange(0, steps_per_period*(periods + 1))/steps_per_period \
-        * 2 * np.pi / omega
+    t_range = (
+        np.arange(0, steps_per_period * (periods + 1))
+        / steps_per_period
+        * 2
+        * np.pi
+        / omega
+    )
 
-    trajectory = odeint(rhs, initial_conditions, t_range,
-                        args=args)
+    trajectory = odeint(rhs, initial_conditions, t_range, args=args)
 
     # unpack the solution
     x, p = trajectory.T
 
     # plot the trajecotry
-    ax_tr.plot(x, p, linestyle='none', marker='o', markersize=0.5)
+    ax_tr.plot(x, p, linestyle="none", marker="o", markersize=0.5)
 
     # and the stroboscopic view
-    ax_st.plot(x[::steps_per_period], p[::steps_per_period], linestyle='none',
-               marker='o', markersize=0.8)
+    ax_st.plot(
+        x[::steps_per_period],
+        p[::steps_per_period],
+        linestyle="none",
+        marker="o",
+        markersize=0.8,
+    )
 
-def handle_mouse_click(axes, periods,
-                   steps_per_period, args, event):
+
+def handle_mouse_click(axes, periods, steps_per_period, args, event):
     """Reacts to a mouse click if no toolbar mode is activated.
 
     Passes all arguments except `event` on to `add_trajectory`.
@@ -136,21 +148,21 @@ def handle_mouse_click(axes, periods,
 
     # only react if not zooming
     mode = event.canvas.toolbar.mode
-    if event.button != 1 or mode != '' or (event.inaxes not in axes):
+    if event.button != 1 or mode != "" or (event.inaxes not in axes):
         return
 
-
     # plot the trajecotry
-    add_trajectory(axes, periods,
-                   steps_per_period, (event.xdata, event.ydata), args)
+    add_trajectory(axes, periods, steps_per_period, (event.xdata, event.ydata), args)
 
     # refresh the canvas
     event.canvas.draw()
 
+
 def format_coord(x, y, A):
     """Format the coordinate printout to show the energy.
     """
-    return "x={:.5f}   p={:.5f}   H={:.5f}".format(x,y, hamiltonian(x, y, A))
+    return "x={:.5f}   p={:.5f}   H={:.5f}".format(x, y, hamiltonian(x, y, A))
+
 
 def set_up_plots():
     """Sets up the plots and their parameters.
@@ -160,21 +172,22 @@ def set_up_plots():
 
     # Create two subplots (trajectory, stroboscope) sharing the x,y axis.
     fig, (ax_tr, ax_st) = plt.subplots(1, 2, sharex=True, sharey=True)
-    ax_tr.set_title('Phase Space Trajectory')
-    ax_st.set_title('Stroboscopic Phase Space ')
+    ax_tr.set_title("Phase Space Trajectory")
+    ax_st.set_title("Stroboscopic Phase Space ")
 
     for ax in ax_tr, ax_st:
-        ax.set_xlabel(r'$x$')
-        ax.set_ylabel(r'$p$')
+        ax.set_xlabel(r"$x$")
+        ax.set_ylabel(r"$p$")
 
         # set fixed aspect ratio
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
 
         # fix the limits
         ax.set_xlim(-1.2, 1.2)
         ax.set_ylim(-1.2, 1.2)
 
     return fig, (ax_tr, ax_st)
+
 
 def main():
     """Dispatch the main logic. Used as convenience.
@@ -189,25 +202,25 @@ def main():
     periods = 200  # how many drive periods to solve for
     steps_per_period = 50
 
-
     # user guide
     print(__doc__)
 
     # set up figures and listeners
     fig, axes = set_up_plots()
-    on_click = functools.partial(handle_mouse_click, axes, periods,
-                                 steps_per_period, (A, B, omega))
+    on_click = functools.partial(
+        handle_mouse_click, axes, periods, steps_per_period, (A, B, omega)
+    )
 
-    fig.canvas.mpl_connect('button_press_event', on_click)
+    fig.canvas.mpl_connect("button_press_event", on_click)
 
     # show energy in the coordinate view
     for ax in axes:
         ax.format_coord = functools.partial(format_coord, A=A)
 
-
     # add the periodic orbit
-    add_trajectory(axes, periods, steps_per_period, (0.231704,
-                                                     -0.349683), (A, B, omega))
+    add_trajectory(
+        axes, periods, steps_per_period, (0.231704, -0.349683), (A, B, omega)
+    )
 
     # draw the contours
     draw_energy_countour(axes, A)
@@ -217,7 +230,8 @@ def main():
 
     plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 
 ###############################################################################

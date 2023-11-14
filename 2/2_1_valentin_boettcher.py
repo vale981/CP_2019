@@ -14,15 +14,16 @@ import matplotlib.pyplot as plt
 #                                 Plot Set-Up                                 #
 ###############################################################################
 
+
 def set_up_plot():
     """Sets up the global plot parameters."""
     plt.title("Numerical differentiation Errors")
-    plt.xlabel(r'$h$')
+    plt.xlabel(r"$h$")
     plt.ylabel(r"$\Delta f'$")
 
     # logarithmic plot
-    plt.yscale('log')
-    plt.xscale('log')
+    plt.yscale("log")
+    plt.xscale("log")
 
 
 ###############################################################################
@@ -32,6 +33,7 @@ def set_up_plot():
 # If called with compatible types, the following functions support
 # vectored input (`f` must be vecotrized, `h` an numpy array).  In
 # this case, a numpy array will be returned.
+
 
 def forward_diff(f, x, h):
     """Calculates the derivatife of `f` at the point `x` by the
@@ -46,7 +48,7 @@ def forward_diff(f, x, h):
     :rtype: float
     """
 
-    return (f(x+h) - f(x))/h
+    return (f(x + h) - f(x)) / h
 
 
 def central_diff(f, x, h):
@@ -61,7 +63,7 @@ def central_diff(f, x, h):
     :rtype: float
     """
 
-    return (f(x+h/2) - f(x-h/2))/h
+    return (f(x + h / 2) - f(x - h / 2)) / h
 
 
 def extapol_diff(f, x, h):
@@ -76,7 +78,7 @@ def extapol_diff(f, x, h):
     :rtype: float
     """
 
-    return (8*(f(x+h/4) - f(x-h/4)) - f(x+h/2) + f(x-h/2))/(3*h)
+    return (8 * (f(x + h / 4) - f(x - h / 4)) - f(x + h / 2) + f(x - h / 2)) / (3 * h)
 
 
 def _f(x):
@@ -86,7 +88,7 @@ def _f(x):
     :returns: a number or numpy array
     """
 
-    return np.arcsinh(-x**2)
+    return np.arcsinh(-(x ** 2))
 
 
 def __main__():
@@ -100,15 +102,16 @@ def __main__():
 
     # initialize some parameters
     hs = np.logspace(-10, 0, 1000)  # h values
-    x = 1/5  # the evaluation point
-    true_diff = -2*x/np.sqrt(1+x**4)  # the analytic value of the derivative
+    x = 1 / 5  # the evaluation point
+    true_diff = -2 * x / np.sqrt(1 + x ** 4)  # the analytic value of the derivative
 
     # test the differentiation methods, it would be excessive to put
     # that code into a separate function!
     for method, color, name, error_fun in [
-            (forward_diff, "green", "Forward Diff", lambda x: x),
-            (central_diff, "red", "Central Diff", lambda x: x**2),
-            (extapol_diff, "Blue", "Extrapolated Diff", lambda x: x**4)]:
+        (forward_diff, "green", "Forward Diff", lambda x: x),
+        (central_diff, "red", "Central Diff", lambda x: x ** 2),
+        (extapol_diff, "Blue", "Extrapolated Diff", lambda x: x ** 4),
+    ]:
 
         # get the numerical derivatives
         differentials = method(_f, x, hs)
@@ -120,17 +123,24 @@ def __main__():
         expected_errors = np.abs(error_fun(hs) * errors[-1])
 
         # plot both into the diagram
-        plt.plot(hs, expected_errors, color=color, linestyle='-',
-                 label=name, alpha=0.5)
-        plt.plot(hs, errors, color=color, linestyle="None", marker='o',
-                 markersize=0.4, alpha=1, label=f"Expected Error ({name})")
+        plt.plot(hs, expected_errors, color=color, linestyle="-", label=name, alpha=0.5)
+        plt.plot(
+            hs,
+            errors,
+            color=color,
+            linestyle="None",
+            marker="o",
+            markersize=0.4,
+            alpha=1,
+            label=f"Expected Error ({name})",
+        )
 
     # show legend and plot
     plt.legend(loc="best")
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     __main__()
 
 ###############################################################################

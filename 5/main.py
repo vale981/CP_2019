@@ -18,6 +18,7 @@ from functools import partial
 import matplotlib.pyplot as plt
 from scipy.linalg import eigh
 
+
 def two_well_potential(x, A):
     """A scewed two-well potential.
 
@@ -26,7 +27,8 @@ def two_well_potential(x, A):
     :rtype: number
     """
 
-    return x**4 - x**2 - A*x
+    return x ** 4 - x ** 2 - A * x
+
 
 def get_coeff_matrix(potential, h_eff, interval, N):
     """Get the coefficient matrix for the discreticized tiseq.
@@ -42,21 +44,22 @@ def get_coeff_matrix(potential, h_eff, interval, N):
     """
 
     # evaluation points
-    x, dx = np.linspace(*interval, N+2, retstep=True)
+    x, dx = np.linspace(*interval, N + 2, retstep=True)
     x = x[1:-1]  # discard endpoints, leaves `N=N` points
 
     # get the potential and z-parameter
     v = potential(x)
-    z = h_eff**2/(2*dx**2)
+    z = h_eff ** 2 / (2 * dx ** 2)
 
     # create vectors for the secondary diagonals
-    v = v + 2*z
+    v = v + 2 * z
     z_vec = z * np.ones(N - 1)
 
     # build the matrix
     coeffs = np.diag(v) - np.diag(z_vec, k=-1) - np.diag(z_vec, k=1)
 
     return coeffs, x, dx
+
 
 def calculate_eigen(potential, h_eff, interval, N, eigenrange):
     """Calculate the eigenenergies and discrete eigenfunctions of the
@@ -84,7 +87,7 @@ def calculate_eigen(potential, h_eff, interval, N, eigenrange):
     e, phi = eigh(matrix, eigvals=eigenrange)
 
     # normalize the eigenfunctions, riemann intgral ~= sum(phi_i)*delta
-    phi = phi/np.sqrt(dx)
+    phi = phi / np.sqrt(dx)
 
     return e, phi, x, dx
 
@@ -104,7 +107,7 @@ def plot_eigenfunctions(e, phi, interval, x, potential):
     # initialize plot
     fig, ax = plt.subplots(1, 1)
 
-    ax.set_title('Eigenfunctions')
+    ax.set_title("Eigenfunctions")
     ax.set_xlabel(r"x")
     ax.set_ylabel(r"Energy / Propability-Density")
 
@@ -120,23 +123,26 @@ def plot_eigenfunctions(e, phi, interval, x, potential):
     # differences, so that they dont vanish if energies are
     # pseudo-degenerate
     med_energy_diff = np.median(e[1:] - e[:-1])
-    phi = phi/np.max(phi) * med_energy_diff * 0.8
+    phi = phi / np.max(phi) * med_energy_diff * 0.8
 
     # plot the eigenenergies and eigenfunctions
     level = 0
     for eigenval, eigen_phi in zip(e, phi):
-        ax.axhline(eigenval, color='gray')
-        ax.plot(x, eigen_phi + eigenval,
-                label=r"$\varphi$ for $E_{}={}$"
-                .format(level, np.round(eigenval, 4)))
+        ax.axhline(eigenval, color="gray")
+        ax.plot(
+            x,
+            eigen_phi + eigenval,
+            label=r"$\varphi$ for $E_{}={}$".format(level, np.round(eigenval, 4)),
+        )
         level += 1
 
     # plot the potential as a reference
-    ax.plot(x, potential(x), color='gray', label='Potential, Energy Levels')
+    ax.plot(x, potential(x), color="gray", label="Potential, Energy Levels")
 
-    ax.legend(loc='upper right')
+    ax.legend(loc="upper right")
 
     return fig, ax
+
 
 def main():
     """Dispatch the main logic. Used as convenience.
@@ -155,21 +161,20 @@ def main():
     potential = partial(two_well_potential, A=A)
 
     # solve the tiseq
-    e, phi, x, dx = calculate_eigen(potential, h_eff, interval, N,
-                              eigen_range)
+    e, phi, x, dx = calculate_eigen(potential, h_eff, interval, N, eigen_range)
 
     # plot the result
     fig, _ = plot_eigenfunctions(e, phi.T, interval, x, potential)
 
     # as this has nothing to do with the vizualization, i'll put it
     # here
-    param_string = \
-        fr"$A={A}$ $N={N}$ $\delta={np.round(dx, 4)}$ $h_{{eff}}={h_eff}$"
+    param_string = fr"$A={A}$ $N={N}$ $\delta={np.round(dx, 4)}$ $h_{{eff}}={h_eff}$"
     fig.text(0, 0, param_string)
 
     plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 
 ###############################################################################

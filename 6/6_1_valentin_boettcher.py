@@ -22,6 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import quantenmechanik as qm
 
+
 def gauss_wavelet(sigma, p0, h_eff, x0, x):
     """A gaussian wavelet.
 
@@ -32,8 +33,13 @@ def gauss_wavelet(sigma, p0, h_eff, x0, x):
     :param x: evaluation point / array
     """
 
-    return 1/(2*np.pi*sigma**2)**(1/4) \
-        *np.exp(-(x-x0)**2/(4*sigma**2))*np.exp(1j/h_eff*p0*x)
+    return (
+        1
+        / (2 * np.pi * sigma ** 2) ** (1 / 4)
+        * np.exp(-((x - x0) ** 2) / (4 * sigma ** 2))
+        * np.exp(1j / h_eff * p0 * x)
+    )
+
 
 def two_well_potential(x, A):
     """A scewed two-well potential.
@@ -42,7 +48,8 @@ def two_well_potential(x, A):
     :returns: the potential at point x, i.e. V(x)
     """
 
-    return x**4 - x**2 - A*x
+    return x ** 4 - x ** 2 - A * x
+
 
 def projection_coeff(base, initial, points):
     """Calculate the projection coefficients for a wave function at
@@ -57,6 +64,7 @@ def projection_coeff(base, initial, points):
     dx = np.abs(points[1] - points[0])
     return dx * (base.conjugate().T @ initial(points))
 
+
 def initial_error(base, coeff, initial, points):
     """Calculate the deviation of the reconstructed wave function from
     its original at t=0.
@@ -70,10 +78,11 @@ def initial_error(base, coeff, initial, points):
     """
 
     diffs = base @ coeff - initial(points)  # discetized difference function
-    dx = (points[1] - points[0])
+    dx = points[1] - points[0]
 
     # integral = dx * sum
-    return dx * np.sum(np.abs(diffs)**2)
+    return dx * np.sum(np.abs(diffs) ** 2)
+
 
 def expected_energy_value(energies, coeff):
     """
@@ -82,7 +91,8 @@ def expected_energy_value(energies, coeff):
     :param coeff: the projection coefficients of the wave function
     :returns: the expected energy value
     """
-    return energies @ np.abs(coeff)**2
+    return energies @ np.abs(coeff) ** 2
+
 
 def time_evolution(base, energies, coeff, h_eff):
     """Get the time evolution of a given wave function.
@@ -100,12 +110,14 @@ def time_evolution(base, energies, coeff, h_eff):
 
     # close over the function parameters
     def wave_function(t):
-        return base @ (np.exp(-1j*energies/h_eff * t) * coeff)
+        return base @ (np.exp(-1j * energies / h_eff * t) * coeff)
 
     return wave_function
 
-def animate_time_evolution(base, energies, points, h_eff,
-                           wavelet_params, scaling, fig, ax):
+
+def animate_time_evolution(
+    base, energies, points, h_eff, wavelet_params, scaling, fig, ax
+):
     """Plot an animation of the evolution of a wavelet.
 
     :param base: the projection base
@@ -118,18 +130,18 @@ def animate_time_evolution(base, energies, points, h_eff,
     :param ax: the axis to draw on
 
     """
-     # escape parameters for the infinite loop
+    # escape parameters for the infinite loop
     exit_flag = False
 
     # save the number of lines present to clear the plot
     line_num = len(ax.lines)
 
     # to display the wave energy and quality
-    status_text = fig.text(0, 0, '')
+    status_text = fig.text(0, 0, "")
 
     # the worker function that does the actual animation
     def run(event):
-        nonlocal exit_flag # we need to modify the outer scope
+        nonlocal exit_flag  # we need to modify the outer scope
 
         ax.lines = ax.lines[0:line_num]
         # create the initial wavelet
@@ -139,20 +151,21 @@ def animate_time_evolution(base, energies, points, h_eff,
         coeff = projection_coeff(base, wavelet, points)
         energy = expected_energy_value(energies, coeff)
         quality = initial_error(base, coeff, wavelet, points)
-        print(f'Projection Error: {quality}')
+        print(f"Projection Error: {quality}")
 
         # get the time evolution
         time_dep_wavelet = time_evolution(base, energies, coeff, h_eff)
 
         # plot the energy and an initial line
-        ax.axhline(energy, color='gray', linestyle='--')
-        line = ax.plot(points, np.abs(wavelet(points))**2, color='green')
+        ax.axhline(energy, color="gray", linestyle="--")
+        line = ax.plot(points, np.abs(wavelet(points)) ** 2, color="green")
 
         # set the status text
         delta = np.round(points[1] - points[0], 6)
-        status_text.\
-            set_text(fr"$N={len(points)}$, $\delta = {delta}$ " + \
-                     fr"Error=${quality}$,  Energy=${energy}$")
+        status_text.set_text(
+            fr"$N={len(points)}$, $\delta = {delta}$ "
+            + fr"Error=${quality}$,  Energy=${energy}$"
+        )
 
         start = time.time()  # set the initial time
 
@@ -160,7 +173,7 @@ def animate_time_evolution(base, energies, points, h_eff,
         while not exit_flag:
             # calculate the time difference to get a realtime plot
             dt = time.time() - start
-            wave = np.abs(time_dep_wavelet(dt))**2
+            wave = np.abs(time_dep_wavelet(dt)) ** 2
             wave = scaling * wave
 
             # plot the wave at its energy
@@ -174,12 +187,14 @@ def animate_time_evolution(base, energies, points, h_eff,
     def set_exit_flag(_):
         nonlocal exit_flag
         exit_flag = True
-    fig.canvas.mpl_connect('close_event', set_exit_flag)
+
+    fig.canvas.mpl_connect("close_event", set_exit_flag)
 
     # listen to clicks on the canvas, the old computation eneters an
     # unknown state, i've cut out the fix for that to save
     # space
     fig.canvas.mpl_connect("button_press_event", run)
+
 
 def main():
     """Dispatch the main logic. Used as convenience.
@@ -210,17 +225,18 @@ def main():
 
     # st up the plot and draw the potenial
     fig, ax = plt.subplots(1, 1)
-    qm.plot_eigenfunktionen(ax, e, phi, points, potential,
-                            betragsquadrat=True, fak=scaling)
+    qm.plot_eigenfunktionen(
+        ax, e, phi, points, potential, betragsquadrat=True, fak=scaling
+    )
     ax.set_title("Asym. Two-Well Potential, Time evolution of a Wavelet")
     ax.set_ylabel("Potential, Eigenfunctions and Wavelet (absolute square)")
 
     # start the animation listener
-    animate_time_evolution(phi, e, points, h_eff, wavelet_params,
-                           scaling, fig, ax)
+    animate_time_evolution(phi, e, points, h_eff, wavelet_params, scaling, fig, ax)
     plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 
 ###############################################################################

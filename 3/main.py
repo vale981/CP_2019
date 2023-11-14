@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Compare numeric integration methods.
@@ -36,6 +35,7 @@ import matplotlib.pyplot as plt
 #                                 Plot Set-Up                                 #
 ###############################################################################
 
+
 def set_up_plot():
     """Sets up the plot parameters.
 
@@ -46,7 +46,7 @@ def set_up_plot():
     ax = fig.add_subplot(1, 1, 1, xscale="log", yscale="log")
 
     ax.set_title("Numerical Integration Errors")
-    ax.set_xlabel(r'$h$')
+    ax.set_xlabel(r"$h$")
     ax.set_ylabel(r"Relative Error $I(f)$")
 
     return fig, ax
@@ -59,6 +59,7 @@ def set_up_plot():
 # If called with compatible types, the following functions support
 # vectored input (`f` must be vecotrized, `h` an numpy array).  In
 # this case, a numpy array will be returned.
+
 
 def trapez_int(func, interval, steps):
     """Calculate the integral of a function over an interval.
@@ -93,7 +94,7 @@ def middlepoint_int(func, interval, steps):
     points, h = np.linspace(*interval, steps, retstep=True)
 
     # we begin counting at 1 (only midpoints)
-    partial_sums = func(points[1:] - h/2)
+    partial_sums = func(points[1:] - h / 2)
 
     return h * partial_sums.sum(), h
 
@@ -117,7 +118,8 @@ def simpson_int(func, interval, steps):
     partial_sums[1:-1:2] *= 4
     partial_sums[2:-2:2] *= 2
 
-    return h/3 * partial_sums.sum(), h
+    return h / 3 * partial_sums.sum(), h
+
 
 def main():
     """Dispatch the main logic. Used as convenience.
@@ -129,7 +131,7 @@ def main():
     fig, ax = set_up_plot()
 
     # integration interval
-    interval = (-np.pi/2, np.pi/4)
+    interval = (-np.pi / 2, np.pi / 4)
 
     # initialize some parameters
     max_steps = 1000
@@ -139,16 +141,14 @@ def main():
     N = np.int32(np.abs((interval[1] - interval[0]) / hs))
 
     # the index where the error plot and the projected error plot touch
-    touch_index = int(len(N)*3/4)
+    touch_index = int(len(N) * 3 / 4)
 
-    functions = [(lambda x: np.sinh(2*x), "sinh(2x)",
-                  -4.541387398431731922871),
-                 (lambda x: np.exp(-100*x**2), "exp(-100*x^2)",
-                  0.17724538509055160272982),
-                 (lambda x: 0.5 * (1.0+np.sign(x)), r"$\Theta(x)$",
-                  interval[1]),
-                 (np.ones_like, r"$1$",  # constant function
-                  interval[1] - interval[0])]
+    functions = [
+        (lambda x: np.sinh(2 * x), "sinh(2x)", -4.541387398431731922871),
+        (lambda x: np.exp(-100 * x ** 2), "exp(-100*x^2)", 0.17724538509055160272982),
+        (lambda x: 0.5 * (1.0 + np.sign(x)), r"$\Theta(x)$", interval[1]),
+        (np.ones_like, r"$1$", interval[1] - interval[0]),  # constant function
+    ]
 
     # choose the function to analyze
     function, name, true_int = functions[2]
@@ -161,9 +161,10 @@ def main():
     # method function, plot color,
     # method name, exponent of the projected error
     for method, color, method_name, error_exp in [
-            (trapez_int, "green", "trapez", 2),  # note, no lambda :)
-            (middlepoint_int, "red", "middlepoint", 2),
-            (simpson_int, "blue", "simpson", 4)]:
+        (trapez_int, "green", "trapez", 2),  # note, no lambda :)
+        (middlepoint_int, "red", "middlepoint", 2),
+        (simpson_int, "blue", "simpson", 4),
+    ]:
 
         # vectorize the step count argument for convenience
         method = np.vectorize(method, excluded=[0, 1])
@@ -176,23 +177,38 @@ def main():
 
         # calculate the expected h^alpha error curve; we normalize the
         # error function so that it is close the the calculated values
-        expected_errors = \
-            np.abs((step_sizes)**error_exp/(step_sizes[touch_index])**error_exp
-                   * errors[touch_index])
+        expected_errors = np.abs(
+            (step_sizes) ** error_exp
+            / (step_sizes[touch_index]) ** error_exp
+            * errors[touch_index]
+        )
 
         # plot both into the diagram
-        ax.plot(step_sizes, expected_errors, color=color, linestyle='-',
-                 label=f"{name}, {method_name}", alpha=0.5)
-        ax.plot(step_sizes, errors, color=color, linestyle="None", marker='o',
-                 markersize=0.4, alpha=1,
-                 label=f"Exp. Error ({name}, {method_name})")
+        ax.plot(
+            step_sizes,
+            expected_errors,
+            color=color,
+            linestyle="-",
+            label=f"{name}, {method_name}",
+            alpha=0.5,
+        )
+        ax.plot(
+            step_sizes,
+            errors,
+            color=color,
+            linestyle="None",
+            marker="o",
+            markersize=0.4,
+            alpha=1,
+            label=f"Exp. Error ({name}, {method_name})",
+        )
 
     # show legend and plot
     ax.legend(loc="best")
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 ###############################################################################
